@@ -1,2 +1,2 @@
 # my_flashcard_app
-暗記アプリ
+AIが作った暗記アプリ
