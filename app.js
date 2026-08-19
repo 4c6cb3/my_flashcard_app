@@ -610,7 +610,7 @@ function loadNextCard() {
   if (userConfig.mode === "FAST") {
     charIndex = 0;
     state = "TYPING";
-    tapHintEl.textContent = "画面のどこかをタップしてストップ！";
+    tapHintEl.textContent = "画面をタップして問題文をストップ";
     startTime = Date.now();
 
     clearInterval(timer);
@@ -626,7 +626,7 @@ function loadNextCard() {
   } else {
     questionEl.textContent = currentCard.question;
     state = "STOPPED";
-    tapHintEl.textContent = "画面のどこかをタップして答えを表示";
+    tapHintEl.textContent = "画面をタップして答えを表示";
   }
 }
 
