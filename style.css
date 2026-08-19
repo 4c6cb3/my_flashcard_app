@@ -221,6 +221,97 @@ header {
   cursor: pointer;
 }
 
+/* 努力量（カレンダー・継続記録）画面 */
+.streak-card {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.streak-count {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.streak-message {
+  font-size: 0.9rem;
+  opacity: 0.95;
+}
+
+.calendar-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.calendar-header h3 {
+  font-size: 1rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.calendar-day-header {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: var(--text-sub);
+  padding-bottom: 6px;
+}
+
+.calendar-cell {
+  background: var(--bg-color);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  min-height: 52px;
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calendar-cell.empty {
+  background: transparent;
+  border: none;
+}
+
+.calendar-cell .day-num {
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.calendar-cell .day-count {
+  font-size: 0.65rem;
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.calendar-cell.has-data {
+  background-color: var(--stats-bg);
+  border-color: var(--accent-color);
+}
+
+.calendar-cell.today {
+  border: 2px solid #ef4444;
+}
+
 /* オプション画面 */
 .option-group {
   background: var(--card-bg);
@@ -491,7 +582,7 @@ header {
   max-height: 85vh;
 }
 
-/* テキストエリア・入力フィールドの共通化（折り返し＆複数行対応） */
+/* テキストエリア・入力フィールド */
 .input-field {
   width: 100%;
   padding: 10px;

@@ -22,7 +22,10 @@
 
       <div class="menu-nav">
         <button class="btn-secondary" onclick="showNewDeckModal()">＋ 新しいデッキを作成</button>
-        <button class="btn-option-link" onclick="showOption()">オプション</button>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn-option-link" onclick="showStats()">📊努力量</button>
+          <button class="btn-option-link" onclick="showOption()">オプション</button>
+        </div>
       </div>
 
       <!-- デッキ一覧 -->
@@ -35,6 +38,30 @@
         <div class="file-input-wrapper">
           <input type="file" id="csv-file-input" accept=".csv">
         </div>
+      </div>
+    </section>
+
+    <!-- ================= フェーズ: 努力量の可視化 (カレンダー & 継続記録) ================= -->
+    <section id="stats-screen" class="screen hidden">
+      <header class="screen-header">
+        <button class="btn-back" onclick="showMenu()">← メニューに戻る</button>
+        <h2>学習データと努力量</h2>
+      </header>
+
+      <!-- 継続記録カード -->
+      <div class="streak-card">
+        <div class="streak-count">🔥 <span id="streak-days">0</span> 日連続勉強中！！</div>
+        <div id="streak-message" class="streak-message">まずは今日、最初の1枚を挑戦してみよう！</div>
+      </div>
+
+      <!-- カレンダーカード -->
+      <div class="calendar-card">
+        <div class="calendar-header">
+          <button class="btn-small" onclick="changeCalendarMonth(-1)">← 前月</button>
+          <h3 id="calendar-title">2026年 3月</h3>
+          <button class="btn-small" onclick="changeCalendarMonth(1)">次月 →</button>
+        </div>
+        <div id="calendar-grid" class="calendar-grid"></div>
       </div>
     </section>
 
@@ -78,10 +105,10 @@
         <h3>文字表示スピード</h3>
         <div class="speed-control-container">
           <label for="char-speed-range">表示速度: <span id="speed-value-display">150</span> ms/文字</label>
-          <input type="range" id="char-speed-range" min="50" max="300" step="10" value="150" oninput="updateCharSpeed(this.value)">
+          <input type="range" id="char-speed-range" min="50" max="250" step="10" value="150" oninput="updateCharSpeed(this.value)">
           <div class="speed-labels">
             <span>速い (50ms)</span>
-            <span>遅い (300ms)</span>
+            <span>遅い (250ms)</span>
           </div>
         </div>
 

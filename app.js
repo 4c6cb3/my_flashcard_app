@@ -3,7 +3,7 @@ const defaultDecks = [
   {
     id: "deck-1",
     title: "雑学クイズ基本セット",
-    orderMode: "SHUFFLE", // "SHUFFLE" | "ORDER" | "WEAK"
+    orderMode: "SHUFFLE",
     cards: [
       {
         id: "card-1",
@@ -31,6 +31,7 @@ const defaultDecks = [
 
 // アプリ状態＆設定
 let decks = [];
+let studyLogs = {}; // YYYY-MM-DD: 枚数
 let currentDeck = null;
 let studyQueue = [];
 let currentCard = null;
@@ -38,6 +39,9 @@ let targetDeckForAddCard = null;
 let targetDeckForCardList = null;
 let targetDeckForSettings = null;
 let targetCardForEdit = null;
+
+// カレンダー表示月データ
+let currentCalendarDate = new Date();
 
 // カード一覧のページネーション管理
 let cardListPageIndex = 0;
@@ -60,6 +64,7 @@ const SAMPLE_PREVIEW_TEXT = "山梨県と静岡県にまたがる、日本で一
 
 // DOM要素
 const menuScreen = document.getElementById("menu-screen");
+const statsScreen = document.getElementById("stats-screen");
 const optionScreen = document.getElementById("option-screen");
 const quizScreen = document.getElementById("quiz-screen");
 const addCardModal = document.getElementById("add-card-modal");
@@ -82,6 +87,12 @@ const statProgressEl = document.getElementById("stat-progress");
 const statTimeEl = document.getElementById("stat-time");
 const buttonsEl = document.getElementById("action-buttons");
 const tapHintEl = document.getElementById("tap-hint");
+
+// 努力量（カレンダー）DOM要素
+const streakDaysEl = document.getElementById("streak-days");
+const streakMessageEl = document.getElementById("streak-message");
+const calendarTitleEl = document.getElementById("calendar-title");
+const calendarGridEl = document.getElementById("calendar-grid");
 
 // モーダル・設定用DOM要素
 const newCardQ = document.getElementById("new-card-q");
@@ -126,6 +137,15 @@ function initApp() {
     decks = defaultDecks;
     saveDecks();
   }
+
+  const savedLogs = localStorage.getItem("aoki_logs");
+  if (savedLogs) {
+    try {
+      studyLogs = JSON.parse(savedLogs);
+    } catch (e) {
+      studyLogs = {};
+    }
+  }
   
   showMenu();
 }
@@ -136,6 +156,26 @@ function saveDecks() {
 
 function saveConfig() {
   localStorage.setItem("aoki_config", JSON.stringify(userConfig));
+}
+
+function saveLogs() {
+  localStorage.setItem("aoki_logs", JSON.stringify(studyLogs));
+}
+
+function recordStudyLog() {
+  const todayStr = getFormattedDate(new Date());
+  if (!studyLogs[todayStr]) {
+    studyLogs[todayStr] = 0;
+  }
+  studyLogs[todayStr] += 1;
+  saveLogs();
+}
+
+function getFormattedDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function applyConfigUI() {
@@ -164,6 +204,7 @@ function hideAllScreens() {
   clearInterval(timer);
   clearInterval(previewTimer);
   menuScreen.classList.add("hidden");
+  statsScreen.classList.add("hidden");
   optionScreen.classList.add("hidden");
   quizScreen.classList.add("hidden");
 }
@@ -174,13 +215,115 @@ function showMenu() {
   renderMenu();
 }
 
+function showStats() {
+  hideAllScreens();
+  statsScreen.classList.remove("hidden");
+  renderStatsScreen();
+}
+
 function showOption() {
   hideAllScreens();
   optionScreen.classList.remove("hidden");
   applyConfigUI();
 }
 
-// --- 3. オプション設定 ---
+// --- 3. 努力量（可視化＆継続記録）制御 ---
+function calculateStreak() {
+  let streak = 0;
+  let checkDate = new Date();
+  
+  const todayStr = getFormattedDate(checkDate);
+  let hasToday = !!(studyLogs[todayStr] && studyLogs[todayStr] > 0);
+
+  if (!hasToday) {
+    // 今日まだ学習していない場合、昨日からさかのぼってチェック
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  while (true) {
+    const dateStr = getFormattedDate(checkDate);
+    if (studyLogs[dateStr] && studyLogs[dateStr] > 0) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+function getEncouragementMessage(streak) {
+  if (streak === 0) return "まずは今日、最初の1枚を挑戦してみよう！";
+  if (streak === 1) return "ナイススタート！この調子で明日も続けよう！";
+  if (streak < 3) return "素晴らしい！習慣化への第一歩を踏み出せています！";
+  if (streak < 7) return "すごい集中力！この勢いで1週間を目指そう！";
+  if (streak < 14) return "1週間突破！着実に知識が定着してきています！";
+  if (streak < 30) return "継続の達人！素晴らしい努力が実を結んでいます！";
+  return "伝説的継続力！あなたの努力は本当に素晴らしいです！！";
+}
+
+function renderStatsScreen() {
+  const streak = calculateStreak();
+  streakDaysEl.textContent = streak;
+  streakMessageEl.textContent = getEncouragementMessage(streak);
+
+  renderCalendar();
+}
+
+function changeCalendarMonth(delta) {
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth();
+
+  calendarTitleEl.textContent = `${year}年 ${month + 1}月`;
+  calendarGridEl.innerHTML = "";
+
+  // 曜日ヘッダー
+  const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
+  dayNames.forEach(d => {
+    const dh = document.createElement("div");
+    dh.className = "calendar-day-header";
+    dh.textContent = d;
+    calendarGridEl.appendChild(dh);
+  });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = getFormattedDate(new Date());
+
+  // 月初めのパディングセル
+  for (let i = 0; i < firstDay; i++) {
+    const emptyCell = document.createElement("div");
+    emptyCell.className = "calendar-cell empty";
+    calendarGridEl.appendChild(emptyCell);
+  }
+
+  // 日付セル生成
+  for (let day = 1; day <= daysInMonth; day++) {
+    const cellDate = new Date(year, month, day);
+    const dateStr = getFormattedDate(cellDate);
+    const count = studyLogs[dateStr] || 0;
+
+    const cell = document.createElement("div");
+    let cellClass = "calendar-cell";
+    if (count > 0) cellClass += " has-data";
+    if (dateStr === todayStr) cellClass += " today";
+
+    cell.className = cellClass;
+    cell.innerHTML = `
+      <span class="day-num">${day}</span>
+      ${count > 0 ? `<span class="day-count">${count}枚</span>` : ""}
+    `;
+    calendarGridEl.appendChild(cell);
+  }
+}
+
+// --- 4. オプション設定 ---
 function changeTheme(theme) {
   userConfig.theme = theme;
   saveConfig();
@@ -215,7 +358,7 @@ function startPreviewTyping() {
   }, userConfig.charSpeed);
 }
 
-// --- 4. メインメニュー描画 ---
+// --- 5. メインメニュー描画 ---
 function renderMenu() {
   deckListEl.innerHTML = "";
   const now = Date.now();
@@ -252,7 +395,7 @@ function renderMenu() {
   });
 }
 
-// --- 5. デッキ・出題設定モーダル ---
+// --- 6. デッキ・出題設定モーダル ---
 function openDeckSettingsModal(deckId) {
   targetDeckForSettings = deckId;
   const deck = decks.find(d => d.id === deckId);
@@ -286,7 +429,7 @@ function submitDeckSettings() {
   closeDeckSettingsModal();
 }
 
-// --- 6. デッキ・カード管理機能 ---
+// --- 7. デッキ・カード管理機能 ---
 function showNewDeckModal() {
   const title = prompt("新しいデッキ名を入力してください:");
   if (title && title.trim()) {
@@ -448,7 +591,7 @@ function submitEditCard() {
 // カード一覧モーダル制御（100件ごとページネーション対応）
 function openCardListModal(deckId) {
   targetDeckForCardList = deckId;
-  cardListPageIndex = 0; // 開くときは先頭ページに戻す
+  cardListPageIndex = 0;
   const deck = decks.find(d => d.id === deckId);
   if (!deck) return;
 
@@ -510,7 +653,6 @@ function renderCardList() {
     cardListContainer.appendChild(cardEl);
   });
 
-  // ページネーションコントロールの描画
   cardPaginationEl.innerHTML = `
     <button class="btn-small" ${cardListPageIndex === 0 ? 'disabled style="opacity:0.4; cursor:default;"' : ''} onclick="changeCardListPage(-1)">← 前の100件</button>
     <span>${cardListPageIndex + 1} / ${totalPages} ページ (${deck.cards.length}枚中)</span>
@@ -530,7 +672,7 @@ function deleteCard(cardId) {
   }
 }
 
-// --- 7. CSVインポート ---
+// --- 8. CSVインポート ---
 csvInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -577,7 +719,7 @@ csvInput.addEventListener("change", (e) => {
   reader.readAsText(file, "UTF-8");
 });
 
-// --- 8. 忘却曲線アルゴリズム（SM-2 調整版） ---
+// --- 9. 忘却曲線アルゴリズム（SM-2 調整版） ---
 function calculateNextReview(card, rating) {
   const now = Date.now();
   const ONE_MINUTE = 60 * 1000;
@@ -635,7 +777,7 @@ function calculateNextReview(card, rating) {
   saveDecks();
 }
 
-// --- 9. クイズ制御 & 出題順ソート ---
+// --- 10. クイズ制御 & 出題順ソート ---
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -712,7 +854,7 @@ function loadNextCard() {
   if (userConfig.mode === "FAST") {
     charIndex = 0;
     state = "TYPING";
-    tapHintEl.textContent = "画面のどこかをタップしてストップ！";
+    tapHintEl.textContent = "画面をタップしてストップ";
     startTime = Date.now();
 
     clearInterval(timer);
@@ -728,7 +870,7 @@ function loadNextCard() {
   } else {
     questionEl.textContent = currentCard.question;
     state = "STOPPED";
-    tapHintEl.textContent = "画面のどこかをタップして答えを表示";
+    tapHintEl.textContent = "画面をタップして答えを表示";
   }
 }
 
@@ -789,6 +931,9 @@ quizScreen.addEventListener("click", (event) => {
 // 回答ボタン処理
 function handleAnswer(rating) {
   if (!currentCard) return;
+
+  // 学習枚数をログに記録
+  recordStudyLog();
 
   calculateNextReview(currentCard, rating);
 
