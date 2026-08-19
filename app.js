@@ -28,7 +28,7 @@ const defaultDecks = [
   }
 ];
 
-// アプリ状態＆設定
+// アプリ状態＆設定（デフォルトを NORMAL に設定）
 let decks = [];
 let currentDeck = null;
 let studyQueue = [];
@@ -39,7 +39,7 @@ let targetCardForEdit = null;
 
 let userConfig = {
   theme: "light",     // "light" | "dark"
-  mode: "FAST",       // "FAST" | "NORMAL"
+  mode: "NORMAL",     // デフォルトを "NORMAL" に変更
   charSpeed: 150      // 1文字あたりの表示スピード(ms)
 };
 
@@ -105,7 +105,6 @@ function initApp() {
   }
   applyConfigUI();
 
-  // LocalStorageからインポート済み含む全デッキデータを復元
   const savedDecks = localStorage.getItem("aoki_decks");
   if (savedDecks) {
     try {
@@ -118,14 +117,10 @@ function initApp() {
     saveDecks();
   }
   
-  // リポジトリ非公開化（Pages停止時）におけるローカルデータの安全確保
   initAutoPrivateHandling();
-
   showMenu();
 }
 
-// リポジトリがPrivate化されGitHub Pagesが利用不可になっても、
-// ローカル保存データ（インポートしたファイル等）が破棄されないように保持・同期するバックアップロジック
 function initAutoPrivateHandling() {
   if (decks && decks.length > 0) {
     saveDecks();
@@ -202,7 +197,6 @@ function updateCharSpeed(speed) {
   startPreviewTyping();
 }
 
-// スピードプレビューアニメーション機能
 function startPreviewTyping() {
   clearInterval(previewTimer);
   previewTextContainer.textContent = "";
@@ -497,7 +491,6 @@ csvInput.addEventListener("change", (e) => {
         cards: newCards
       };
       
-      // デッキ配列に追加してLocalStorageに永続化
       decks.push(newDeck);
       saveDecks();
       renderMenu();
@@ -617,7 +610,7 @@ function loadNextCard() {
   if (userConfig.mode === "FAST") {
     charIndex = 0;
     state = "TYPING";
-    tapHintEl.textContent = "画面（カード）をタップしてストップ！";
+    tapHintEl.textContent = "画面のどこかをタップしてストップ！";
     startTime = Date.now();
 
     clearInterval(timer);
@@ -633,7 +626,7 @@ function loadNextCard() {
   } else {
     questionEl.textContent = currentCard.question;
     state = "STOPPED";
-    tapHintEl.textContent = "画面（カード）をタップして答えを表示";
+    tapHintEl.textContent = "画面のどこかをタップして答えを表示";
   }
 }
 
@@ -652,8 +645,13 @@ function searchOnGoogle(event) {
   }
 }
 
-// カードタップ処理
-quizCardEl.addEventListener("click", () => {
+// 画面全体のタップ処理（問題エリア以外・カード全体どこをタップしてもストップ＆回答表示可能）
+quizScreen.addEventListener("click", (event) => {
+  // ボタンやリンク、入力欄等の操作時はタップイベントを発火させない
+  if (event.target.closest("button") || event.target.closest("a") || event.target.closest("input")) {
+    return;
+  }
+
   if (!currentCard) return;
 
   if (userConfig.mode === "FAST") {

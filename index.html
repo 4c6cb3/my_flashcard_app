@@ -58,12 +58,12 @@
         <h3>デフォルト学習モード</h3>
         <div class="option-controls">
           <label class="radio-label">
-            <input type="radio" name="mode-option" value="FAST" onchange="changeMode('FAST')">
-            <span>みんはや風モード</span>
-          </label>
-          <label class="radio-label">
             <input type="radio" name="mode-option" value="NORMAL" onchange="changeMode('NORMAL')">
             <span>ノーマルモード</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="mode-option" value="FAST" onchange="changeMode('FAST')">
+            <span>みんはや風モード</span>
           </label>
         </div>
       </div>
@@ -103,7 +103,7 @@
     </section>
 
     <!-- ================= フェーズ3: クイズ画面 ================= -->
-    <section id="quiz-screen" class="screen hidden">
+    <section id="quiz-screen" class="screen quiz-layout hidden">
       <header class="quiz-header">
         <button class="btn-back" onclick="showMenu()">← メニューに戻る</button>
         <h2 id="current-deck-title">デッキ名</h2>
@@ -139,24 +139,26 @@
         </div>
       </main>
 
-      <!-- 4つの回答ボタン（横並び） -->
-      <footer id="action-buttons" class="button-grid hidden">
-        <button class="btn btn-again" onclick="handleAnswer('again')">
-          もう一度<small>&lt; 1分</small>
-        </button>
-        <button class="btn btn-hard" onclick="handleAnswer('hard')">
-          難しい<small>12時間後</small>
-        </button>
-        <button class="btn btn-good" onclick="handleAnswer('good')">
-          ふつう<small>1日後</small>
-        </button>
-        <button class="btn btn-easy" onclick="handleAnswer('easy')">
-          簡単<small>4日後</small>
-        </button>
-      </footer>
+      <!-- 画面下部に固定・配置するエリア（ヒント＆難易度調整ボタン） -->
+      <div class="quiz-footer">
+        <div id="tap-hint" class="tap-hint">画面をタップして操作</div>
 
-      <!-- 操作ヒント -->
-      <div id="tap-hint" class="tap-hint">タップして操作</div>
+        <!-- 4つの回答ボタン（画面最下部に配置） -->
+        <footer id="action-buttons" class="button-grid hidden">
+          <button class="btn btn-again" onclick="handleAnswer('again')">
+            もう一度<small>&lt; 1分</small>
+          </button>
+          <button class="btn btn-hard" onclick="handleAnswer('hard')">
+            難しい<small>12時間後</small>
+          </button>
+          <button class="btn btn-good" onclick="handleAnswer('good')">
+            ふつう<small>1日後</small>
+          </button>
+          <button class="btn btn-easy" onclick="handleAnswer('easy')">
+            簡単<small>4日後</small>
+          </button>
+        </footer>
+      </div>
     </section>
 
     <!-- ================= モーダル: カード手動追加 ================= -->
