@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>aoki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-light">
+  <div class="container">
+    
+    <!-- ================= フェーズ1: メインメニュー ================= -->
+    <section id="menu-screen" class="screen">
+      <header>
+        <h1 class="app-logo">aoki</h1>
+      </header>
+
+      <div class="menu-nav">
+        <button class="btn-secondary" onclick="showNewDeckModal()">＋ 新しいデッキを作成</button>
+        <button class="btn-option-link" onclick="showOption()">オプション</button>
+      </div>
+
+      <!-- デッキ一覧 -->
+      <div id="deck-list" class="deck-list"></div>
+
+      <!-- CSVインポートエリア -->
+      <div class="import-section">
+        <h3>CSVからデッキを追加</h3>
+        <p class="help-text">フォーマット: 問題文, 答え, 解説 (ヘッダーなし)</p>
+        <div class="file-input-wrapper">
+          <input type="file" id="csv-file-input" accept=".csv">
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= フェーズ2: オプション設定 ================= -->
+    <section id="option-screen" class="screen hidden">
+      <header class="screen-header">
+        <button class="btn-back" onclick="showMenu()">← メニューに戻る</button>
+        <h2>オプション</h2>
+      </header>
+
+      <div class="option-group">
+        <h3>カラーテーマ</h3>
+        <div class="option-controls">
+          <label class="radio-label">
+            <input type="radio" name="theme-option" value="light" onchange="changeTheme('light')">
+            <span>ホワイトベース</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="theme-option" value="dark" onchange="changeTheme('dark')">
+            <span>ダークベース</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <h3>デフォルト学習モード</h3>
+        <div class="option-controls">
+          <label class="radio-label">
+            <input type="radio" name="mode-option" value="FAST" onchange="changeMode('FAST')">
+            <span>みんはや風モード</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="mode-option" value="NORMAL" onchange="changeMode('NORMAL')">
+            <span>ノーマルモード</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- みんはや風モード時のみ表示する速度調整エリア -->
+      <div id="speed-option-group" class="option-group hidden">
+        <h3>文字表示スピード</h3>
+        <div class="speed-control-container">
+          <label for="char-speed-range">表示速度: <span id="speed-value-display">150</span> ms/文字</label>
+          <input type="range" id="char-speed-range" min="50" max="300" step="10" value="150" oninput="updateCharSpeed(this.value)">
+          <div class="speed-labels">
+            <span>速い (50ms)</span>
+            <span>遅い (300ms)</span>
+          </div>
+        </div>
+
+        <!-- リアルタイムプレビュー表示エリア -->
+        <div class="preview-box">
+          <div class="preview-label">スピード確認プレビュー:</div>
+          <div id="preview-text-container" class="preview-text"></div>
+        </div>
+      </div>
+
+      <!-- 競技クイズ者向けセクション -->
+      <div class="option-group">
+        <h3>競技クイズ者向け</h3>
+        <p class="help-text" style="margin-bottom: 8px;">問題集の購入・検索に役立つ外部サイトです。</p>
+        <div class="external-link-buttons">
+          <a href="https://booth.pm/ja/search/%E3%82%AF%E3%82%A4%E3%82%BA%E5%95%8F%E9%A1%8C%E9%9B%86" target="_blank" rel="noopener noreferrer" class="btn-external-link">
+            🛒 BOOTH (クイズ問題集検索) ↗
+          </a>
+          <a href="https://q-tak.com/" target="_blank" rel="noopener noreferrer" class="btn-external-link">
+            🚚 クイズ宅急便 ↗
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= フェーズ3: クイズ画面 ================= -->
+    <section id="quiz-screen" class="screen hidden">
+      <header class="quiz-header">
+        <button class="btn-back" onclick="showMenu()">← メニューに戻る</button>
+        <h2 id="current-deck-title">デッキ名</h2>
+        <div id="progress-info">残り: 0枚</div>
+      </header>
+
+      <main id="quiz-card" class="card">
+        <div class="question-container">
+          <p id="question-text"></p>
+        </div>
+
+        <!-- ストップ時の達成度・タイム表示 (早押しモード時) -->
+        <div id="result-stats" class="stats hidden">
+          <span id="stat-progress">達成度: --%</span> | 
+          <span id="stat-time">タイム: --秒</span>
+        </div>
+
+        <!-- 正解・解説表示エリア -->
+        <div id="answer-section" class="answer-section hidden">
+          <hr>
+          <h2>正解：<span id="answer-text"></span></h2>
+          <p id="explanation-text"></p>
+          
+          <!-- Google検索 ＆ カード編集ボタン -->
+          <div class="search-btn-container" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="google-search-btn" class="btn-small" style="background: var(--bg-color);" onclick="searchOnGoogle(event)">
+              🔍 Googleで「<span id="search-term-text"></span>」を検索
+            </button>
+            <button class="btn-small" style="background: var(--bg-color);" onclick="openEditCurrentQuizCard(event)">
+              ✏️ このカードを編集
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <!-- 4つの回答ボタン（横並び） -->
+      <footer id="action-buttons" class="button-grid hidden">
+        <button class="btn btn-again" onclick="handleAnswer('again')">
+          もう一度<small>&lt; 1分</small>
+        </button>
+        <button class="btn btn-hard" onclick="handleAnswer('hard')">
+          難しい<small>12時間後</small>
+        </button>
+        <button class="btn btn-good" onclick="handleAnswer('good')">
+          ふつう<small>1日後</small>
+        </button>
+        <button class="btn btn-easy" onclick="handleAnswer('easy')">
+          簡単<small>4日後</small>
+        </button>
+      </footer>
+
+      <!-- 操作ヒント -->
+      <div id="tap-hint" class="tap-hint">タップして操作</div>
+    </section>
+
+    <!-- ================= モーダル: カード手動追加 ================= -->
+    <div id="add-card-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>カードを追加</h3>
+        <input type="text" id="new-card-q" placeholder="問題文を入力" class="input-field">
+        <input type="text" id="new-card-a" placeholder="答えを入力" class="input-field">
+        <textarea id="new-card-exp" placeholder="解説を入力（任意）" class="input-field textarea"></textarea>
+        <div class="modal-buttons">
+          <button class="btn-modal-cancel" onclick="closeAddCardModal()">キャンセル</button>
+          <button class="btn-modal-submit" onclick="submitAddCard()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= モーダル: カード編集 ================= -->
+    <div id="edit-card-modal" class="modal modal-top hidden">
+      <div class="modal-content">
+        <h3>カードを編集</h3>
+        <input type="text" id="edit-card-q" placeholder="問題文を入力" class="input-field">
+        <input type="text" id="edit-card-a" placeholder="答えを入力" class="input-field">
+        <textarea id="edit-card-exp" placeholder="解説を入力（任意）" class="input-field textarea"></textarea>
+        <div class="modal-buttons">
+          <button class="btn-modal-cancel" onclick="closeEditCardModal()">キャンセル</button>
+          <button class="btn-modal-submit" onclick="submitEditCard()">更新</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= モーダル: カード一覧・編集・削除 ================= -->
+    <div id="card-list-modal" class="modal hidden">
+      <div class="modal-content modal-large">
+        <h3 id="card-list-deck-title">登録カード一覧</h3>
+        <div id="card-list-container" class="card-list-container"></div>
+        <div class="modal-buttons">
+          <button class="btn-modal-cancel" onclick="closeCardListModal()">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

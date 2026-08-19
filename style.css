@@ -1,0 +1,513 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+/* --- テーマ変数の定義 --- */
+body.theme-light {
+  --bg-color: #f0f2f5;
+  --text-main: #333333;
+  --text-sub: #6b7280;
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --header-text: #1f2937;
+  --accent-color: #3b82f6;
+  --banner-bg: #e0e7ff;
+  --banner-text: #3730a3;
+  --stats-bg: #eef2ff;
+  --stats-text: #4f46e5;
+  --shadow: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-dark {
+  --bg-color: #121212;
+  --text-main: #e0e0e0;
+  --text-sub: #9ca3af;
+  --card-bg: #1e1e1e;
+  --card-border: #333333;
+  --header-text: #f3f4f6;
+  --accent-color: #60a5fa;
+  --banner-bg: #1e1b4b;
+  --banner-text: #a5b4fc;
+  --stats-bg: #312e81;
+  --stats-text: #c7d2fe;
+  --shadow: rgba(0, 0, 0, 0.5);
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ヘッダー・タイトル */
+header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.app-logo {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--header-text);
+  letter-spacing: -0.05em;
+}
+
+.screen-header {
+  position: relative;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.screen-header h2 {
+  font-size: 1.2rem;
+  color: var(--header-text);
+}
+
+.btn-back {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* メニューナビ */
+.menu-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.btn-secondary, .btn-option-link {
+  background: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--card-border);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  color: var(--accent-color);
+}
+
+/* デッキ一覧カード */
+.deck-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deck-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.deck-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.deck-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.deck-retention {
+  background-color: var(--banner-bg);
+  color: var(--banner-text);
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.deck-count {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-bottom: 12px;
+}
+
+.deck-manage-btns {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-small {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text-main);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.btn-small-danger {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-start {
+  width: 100%;
+  padding: 10px;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+/* オプション画面 */
+.option-group {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.option-group h3 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.option-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+/* 速度調整 & プレビュー */
+.speed-control-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.speed-control-container input[type="range"] {
+  width: 100%;
+}
+
+.speed-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-sub);
+}
+
+.preview-box {
+  background: var(--bg-color);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.preview-label {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+
+.preview-text {
+  font-size: 0.95rem;
+  font-weight: bold;
+  min-height: 2.8em;
+  line-height: 1.4;
+  color: var(--header-text);
+}
+
+/* 競技クイズ向け外部リンクボタン */
+.external-link-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-external-link {
+  display: block;
+  text-align: center;
+  background: var(--bg-color);
+  color: var(--accent-color);
+  border: 1px solid var(--card-border);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.btn-external-link:hover {
+  opacity: 0.8;
+}
+
+/* CSVインポートエリア */
+.import-section {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 12px;
+  border: 2px dashed var(--card-border);
+}
+
+.import-section h3 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.help-text {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin-bottom: 12px;
+}
+
+/* クイズ画面 */
+.quiz-header {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 24px;
+  min-height: 280px;
+  box-shadow: 0 4px 12px var(--shadow);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  user-select: none;
+}
+
+.question-container {
+  font-size: 1.2rem;
+  font-weight: bold;
+  line-height: 1.6;
+  min-height: 80px;
+}
+
+.stats {
+  background-color: var(--stats-bg);
+  color: var(--stats-text);
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 12px 0;
+}
+
+.answer-section {
+  margin-top: 12px;
+}
+
+.answer-section hr {
+  border: none;
+  border-top: 1px solid var(--card-border);
+  margin-bottom: 12px;
+}
+
+.answer-section h2 {
+  color: #10b981;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+}
+
+/* 回答ボタン（横並び4列） */
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.btn {
+  padding: 10px 4px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: normal;
+  margin-top: 2px;
+}
+
+.btn-again { background-color: #ef4444; }
+.btn-hard  { background-color: #f97316; }
+.btn-good  { background-color: #3b82f6; }
+.btn-easy  { background-color: #10b981; }
+
+.tap-hint {
+  text-align: center;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+
+/* モーダル */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.modal-top {
+  z-index: 1100;
+}
+
+.modal-content {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-large {
+  max-width: 460px;
+  max-height: 80vh;
+}
+
+.input-field {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: var(--bg-color);
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-modal-cancel {
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.btn-modal-submit {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* カード一覧モーダル専用 */
+.card-list-container {
+  overflow-y: auto;
+  max-height: 55vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.card-item {
+  background: var(--bg-color);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.card-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-item-q {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.card-item-a {
+  font-size: 0.85rem;
+  color: #10b981;
+}
+
+.card-item-exp {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+}
