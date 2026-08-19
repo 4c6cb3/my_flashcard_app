@@ -332,7 +332,7 @@ header {
   margin-bottom: 12px;
 }
 
-/* クイズ画面レイアウト（全画面縦に伸ばしてボタンを最下部配置） */
+/* クイズ画面レイアウト */
 .quiz-layout {
   display: flex;
   flex-direction: column;
@@ -413,7 +413,6 @@ header {
   margin-bottom: 8px;
 }
 
-/* クイズフッターエリア（画面最下部に固定） */
 .quiz-footer {
   margin-top: 16px;
   display: flex;
@@ -456,7 +455,7 @@ header {
   font-size: 0.85rem;
 }
 
-/* モーダル */
+/* モーダル共通 */
 .modal {
   position: fixed;
   top: 0;
@@ -489,9 +488,10 @@ header {
 
 .modal-large {
   max-width: 460px;
-  max-height: 80vh;
+  max-height: 85vh;
 }
 
+/* テキストエリア・入力フィールドの共通化（折り返し＆複数行対応） */
 .input-field {
   width: 100%;
   padding: 10px;
@@ -500,11 +500,20 @@ header {
   background: var(--bg-color);
   color: var(--text-main);
   font-size: 0.95rem;
+  resize: vertical;
+  font-family: inherit;
 }
 
-.textarea {
+.textarea-q {
+  min-height: 70px;
+}
+
+.textarea-a {
+  min-height: 60px;
+}
+
+.textarea-exp {
   min-height: 80px;
-  resize: vertical;
 }
 
 .modal-buttons {
@@ -531,13 +540,23 @@ header {
   cursor: pointer;
 }
 
+/* カード一覧・ページネーション */
 .card-list-container {
   overflow-y: auto;
-  max-height: 55vh;
+  max-height: 48vh;
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 8px;
+}
+
+.card-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  padding: 4px 0;
 }
 
 .card-item {
@@ -556,22 +575,26 @@ header {
   flex-direction: column;
   gap: 4px;
   overflow: hidden;
+  flex: 1;
 }
 
 .card-item-q {
   font-size: 0.9rem;
   font-weight: bold;
   word-break: break-all;
+  white-space: pre-wrap;
 }
 
 .card-item-a {
   font-size: 0.85rem;
   color: #10b981;
   word-break: break-all;
+  white-space: pre-wrap;
 }
 
 .card-item-exp {
   font-size: 0.75rem;
   color: var(--text-sub);
   word-break: break-all;
+  white-space: pre-wrap;
 }

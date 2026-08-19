@@ -39,6 +39,10 @@ let targetDeckForCardList = null;
 let targetDeckForSettings = null;
 let targetCardForEdit = null;
 
+// カード一覧のページネーション管理
+let cardListPageIndex = 0;
+const CARDS_PER_PAGE = 100;
+
 let userConfig = {
   theme: "light",     // "light" | "dark"
   mode: "NORMAL",     // "NORMAL" | "FAST"
@@ -73,13 +77,11 @@ const answerSectionEl = document.getElementById("answer-section");
 const answerTextEl = document.getElementById("answer-text");
 const explanationTextEl = document.getElementById("explanation-text");
 const searchTermTextEl = document.getElementById("search-term-text");
-const googleSearchBtn = document.getElementById("google-search-btn");
 const resultStatsEl = document.getElementById("result-stats");
 const statProgressEl = document.getElementById("stat-progress");
 const statTimeEl = document.getElementById("stat-time");
 const buttonsEl = document.getElementById("action-buttons");
 const tapHintEl = document.getElementById("tap-hint");
-const quizCardEl = document.getElementById("quiz-card");
 
 // モーダル・設定用DOM要素
 const newCardQ = document.getElementById("new-card-q");
@@ -97,6 +99,7 @@ const previewTextContainer = document.getElementById("preview-text-container");
 
 const cardListDeckTitle = document.getElementById("card-list-deck-title");
 const cardListContainer = document.getElementById("card-list-container");
+const cardPaginationEl = document.getElementById("card-pagination");
 const deckSettingsTitle = document.getElementById("deck-settings-title");
 
 // --- 1. 初期化・保存 ---
@@ -113,7 +116,6 @@ function initApp() {
   if (savedDecks) {
     try {
       decks = JSON.parse(savedDecks);
-      // 古い形式のデータに出題順モードが指定されていない場合の補完
       decks.forEach(d => {
         if (!d.orderMode) d.orderMode = "SHUFFLE";
       });
@@ -443,9 +445,10 @@ function submitEditCard() {
   closeEditCardModal();
 }
 
-// カード一覧モーダル制御
+// カード一覧モーダル制御（100件ごとページネーション対応）
 function openCardListModal(deckId) {
   targetDeckForCardList = deckId;
+  cardListPageIndex = 0; // 開くときは先頭ページに戻す
   const deck = decks.find(d => d.id === deckId);
   if (!deck) return;
 
@@ -459,6 +462,18 @@ function closeCardListModal() {
   targetDeckForCardList = null;
 }
 
+function changeCardListPage(direction) {
+  const deck = decks.find(d => d.id === targetDeckForCardList);
+  if (!deck) return;
+  const totalPages = Math.ceil(deck.cards.length / CARDS_PER_PAGE) || 1;
+  
+  cardListPageIndex += direction;
+  if (cardListPageIndex < 0) cardListPageIndex = 0;
+  if (cardListPageIndex >= totalPages) cardListPageIndex = totalPages - 1;
+
+  renderCardList();
+}
+
 function renderCardList() {
   const deck = decks.find(d => d.id === targetDeckForCardList);
   if (!deck) return;
@@ -466,15 +481,24 @@ function renderCardList() {
   cardListContainer.innerHTML = "";
   if (deck.cards.length === 0) {
     cardListContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-sub);">カードがありません。</div>`;
+    cardPaginationEl.innerHTML = "";
     return;
   }
 
-  deck.cards.forEach(card => {
+  const totalPages = Math.ceil(deck.cards.length / CARDS_PER_PAGE);
+  if (cardListPageIndex >= totalPages) cardListPageIndex = totalPages - 1;
+
+  const startIdx = cardListPageIndex * CARDS_PER_PAGE;
+  const endIdx = startIdx + CARDS_PER_PAGE;
+  const pageCards = deck.cards.slice(startIdx, endIdx);
+
+  pageCards.forEach((card, idx) => {
+    const absoluteIndex = startIdx + idx + 1;
     const cardEl = document.createElement("div");
     cardEl.className = "card-item";
     cardEl.innerHTML = `
       <div class="card-item-info">
-        <div class="card-item-q">Q. ${card.question}</div>
+        <div class="card-item-q">${absoluteIndex}. Q. ${card.question}</div>
         <div class="card-item-a">A. ${card.answer}</div>
         ${card.explanation ? `<div class="card-item-exp">解説: ${card.explanation}</div>` : ""}
       </div>
@@ -485,6 +509,13 @@ function renderCardList() {
     `;
     cardListContainer.appendChild(cardEl);
   });
+
+  // ページネーションコントロールの描画
+  cardPaginationEl.innerHTML = `
+    <button class="btn-small" ${cardListPageIndex === 0 ? 'disabled style="opacity:0.4; cursor:default;"' : ''} onclick="changeCardListPage(-1)">← 前の100件</button>
+    <span>${cardListPageIndex + 1} / ${totalPages} ページ (${deck.cards.length}枚中)</span>
+    <button class="btn-small" ${cardListPageIndex >= totalPages - 1 ? 'disabled style="opacity:0.4; cursor:default;"' : ''} onclick="changeCardListPage(1)">次の100件 →</button>
+  `;
 }
 
 function deleteCard(cardId) {
@@ -619,7 +650,6 @@ function sortStudyQueue(cards, mode) {
   if (mode === "SHUFFLE") {
     return shuffleArray(queue);
   } else if (mode === "WEAK") {
-    // 復習間隔（interval）が小さい順（まだ覚えていない・定着率が低い順）に並び替え
     return queue.sort((a, b) => {
       if (a.interval !== b.interval) {
         return a.interval - b.interval;
@@ -627,7 +657,6 @@ function sortStudyQueue(cards, mode) {
       return a.reps - b.reps;
     });
   } else {
-    // ORDER: 登録された順番のまま（ソートしない）
     return queue;
   }
 }
@@ -650,7 +679,6 @@ function startQuiz(deckId) {
     }
   }
 
-  // 設定された出題モード（SHUFFLE / ORDER / WEAK）に応じて並び替え
   const orderMode = currentDeck.orderMode || "SHUFFLE";
   studyQueue = sortStudyQueue(baseQueue, orderMode);
 
@@ -721,7 +749,7 @@ function searchOnGoogle(event) {
 
 // 画面全体のタップ処理
 quizScreen.addEventListener("click", (event) => {
-  if (event.target.closest("button") || event.target.closest("a") || event.target.closest("input")) {
+  if (event.target.closest("button") || event.target.closest("a") || event.target.closest("input") || event.target.closest("textarea")) {
     return;
   }
 
