@@ -109,16 +109,16 @@ header {
 .menu-nav {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 
 .btn-secondary, .btn-option-link {
   background: var(--card-bg);
   color: var(--text-main);
   border: 1px solid var(--card-border);
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-radius: 8px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: bold;
   cursor: pointer;
 }
@@ -403,26 +403,6 @@ header {
   opacity: 0.8;
 }
 
-/* CSVインポートエリア */
-.import-section {
-  background: var(--card-bg);
-  border-radius: 10px;
-  padding: 16px;
-  margin-top: 12px;
-  border: 2px dashed var(--card-border);
-}
-
-.import-section h3 {
-  font-size: 1rem;
-  margin-bottom: 4px;
-}
-
-.help-text {
-  font-size: 0.75rem;
-  color: var(--text-sub);
-  margin-bottom: 12px;
-}
-
 /* クイズ画面レイアウト */
 .quiz-layout {
   display: flex;
@@ -595,17 +575,9 @@ header {
   font-family: inherit;
 }
 
-.textarea-q {
-  min-height: 70px;
-}
-
-.textarea-a {
-  min-height: 60px;
-}
-
-.textarea-exp {
-  min-height: 80px;
-}
+.textarea-q { min-height: 70px; }
+.textarea-a { min-height: 60px; }
+.textarea-exp { min-height: 80px; }
 
 .modal-buttons {
   display: flex;

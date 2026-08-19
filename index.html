@@ -21,24 +21,16 @@
       </header>
 
       <div class="menu-nav">
-        <button class="btn-secondary" onclick="showNewDeckModal()">＋ 新しいデッキを作成</button>
-        <div style="display: flex; gap: 6px;">
-          <button class="btn-option-link" onclick="showStats()">📊努力量</button>
-          <button class="btn-option-link" onclick="showOption()">オプション</button>
+        <button class="btn-secondary" onclick="showNewDeckModal()">＋ 新規デッキ</button>
+        <div style="display: flex; gap: 4px;">
+          <button class="btn-option-link" onclick="openCsvImportModal()">📥 CSV追加</button>
+          <button class="btn-option-link" onclick="showStats()">📊 努力量</button>
+          <button class="btn-option-link" onclick="showOption()">⚙ オプション</button>
         </div>
       </div>
 
       <!-- デッキ一覧 -->
       <div id="deck-list" class="deck-list"></div>
-
-      <!-- CSVインポートエリア -->
-      <div class="import-section">
-        <h3>CSVからデッキを追加</h3>
-        <p class="help-text">フォーマット: 問題文, 答え, 解説 (ヘッダーなし)</p>
-        <div class="file-input-wrapper">
-          <input type="file" id="csv-file-input" accept=".csv">
-        </div>
-      </div>
     </section>
 
     <!-- ================= フェーズ: 努力量の可視化 (カレンダー & 継続記録) ================= -->
@@ -58,7 +50,7 @@
       <div class="calendar-card">
         <div class="calendar-header">
           <button class="btn-small" onclick="changeCalendarMonth(-1)">← 前月</button>
-          <h3 id="calendar-title">2026年 3月</h3>
+          <h3 id="calendar-title">2026年 8月</h3>
           <button class="btn-small" onclick="changeCalendarMonth(1)">次月 →</button>
         </div>
         <div id="calendar-grid" class="calendar-grid"></div>
@@ -91,7 +83,7 @@
         <div class="option-controls">
           <label class="radio-label">
             <input type="radio" name="mode-option" value="NORMAL" onchange="changeMode('NORMAL')">
-            <span>ノーマルモード</span>
+            <span>ノーマルモード（規定値）</span>
           </label>
           <label class="radio-label">
             <input type="radio" name="mode-option" value="FAST" onchange="changeMode('FAST')">
@@ -105,10 +97,10 @@
         <h3>文字表示スピード</h3>
         <div class="speed-control-container">
           <label for="char-speed-range">表示速度: <span id="speed-value-display">150</span> ms/文字</label>
-          <input type="range" id="char-speed-range" min="50" max="250" step="10" value="150" oninput="updateCharSpeed(this.value)">
+          <input type="range" id="char-speed-range" min="50" max="300" step="10" value="150" oninput="updateCharSpeed(this.value)">
           <div class="speed-labels">
             <span>速い (50ms)</span>
-            <span>遅い (250ms)</span>
+            <span>遅い (300ms)</span>
           </div>
         </div>
 
@@ -116,6 +108,20 @@
         <div class="preview-box">
           <div class="preview-label">スピード確認プレビュー:</div>
           <div id="preview-text-container" class="preview-text"></div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <h3>デッキの並び順</h3>
+        <div class="option-controls">
+          <label class="radio-label">
+            <input type="radio" name="sort-option" value="RECENT" onchange="changeDeckSortOrder('RECENT')">
+            <span>最近学習した順（デフォルト）</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="sort-option" value="CREATED" onchange="changeDeckSortOrder('CREATED')">
+            <span>作成・追加順</span>
+          </label>
         </div>
       </div>
 
@@ -192,6 +198,20 @@
         </footer>
       </div>
     </section>
+
+    <!-- ================= モーダル: CSVインポート ================= -->
+    <div id="csv-import-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>📥 CSVからデッキを追加</h3>
+        <p class="help-text">フォーマット: 問題文, 答え, 解説 (ヘッダーなし)</p>
+        <div class="file-input-wrapper" style="margin: 12px 0;">
+          <input type="file" id="csv-file-input" accept=".csv" class="input-field">
+        </div>
+        <div class="modal-buttons">
+          <button class="btn-modal-cancel" onclick="closeCsvImportModal()">閉じる</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ================= モーダル: デッキ出題設定 ================= -->
     <div id="deck-settings-modal" class="modal hidden">

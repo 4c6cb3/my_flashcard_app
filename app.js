@@ -4,6 +4,7 @@ const defaultDecks = [
     id: "deck-1",
     title: "雑学クイズ基本セット",
     orderMode: "SHUFFLE",
+    lastStudied: Date.now(),
     cards: [
       {
         id: "card-1",
@@ -48,9 +49,10 @@ let cardListPageIndex = 0;
 const CARDS_PER_PAGE = 100;
 
 let userConfig = {
-  theme: "light",     // "light" | "dark"
-  mode: "NORMAL",     // "NORMAL" | "FAST"
-  charSpeed: 150      // 1文字あたりの表示スピード(ms)
+  theme: "light",          // "light" | "dark"
+  mode: "NORMAL",          // "NORMAL" | "FAST"
+  charSpeed: 150,          // 1文字あたりの表示スピード(ms)
+  deckSortOrder: "RECENT"  // "RECENT" (最近学習した順) | "CREATED" (追加・作成順)
 };
 
 let charIndex = 0;
@@ -71,6 +73,7 @@ const addCardModal = document.getElementById("add-card-modal");
 const editCardModal = document.getElementById("edit-card-modal");
 const cardListModal = document.getElementById("card-list-modal");
 const deckSettingsModal = document.getElementById("deck-settings-modal");
+const csvImportModal = document.getElementById("csv-import-modal");
 
 const deckListEl = document.getElementById("deck-list");
 const csvInput = document.getElementById("csv-file-input");
@@ -129,6 +132,7 @@ function initApp() {
       decks = JSON.parse(savedDecks);
       decks.forEach(d => {
         if (!d.orderMode) d.orderMode = "SHUFFLE";
+        if (!d.lastStudied) d.lastStudied = 0;
       });
     } catch (e) {
       decks = defaultDecks;
@@ -187,6 +191,9 @@ function applyConfigUI() {
   const modeRadio = document.querySelector(`input[name="mode-option"][value="${userConfig.mode}"]`);
   if (modeRadio) modeRadio.checked = true;
 
+  const sortRadio = document.querySelector(`input[name="sort-option"][value="${userConfig.deckSortOrder}"]`);
+  if (sortRadio) sortRadio.checked = true;
+
   charSpeedRange.value = userConfig.charSpeed;
   speedValueDisplay.textContent = userConfig.charSpeed;
 
@@ -236,7 +243,6 @@ function calculateStreak() {
   let hasToday = !!(studyLogs[todayStr] && studyLogs[todayStr] > 0);
 
   if (!hasToday) {
-    // 今日まだ学習していない場合、昨日からさかのぼってチェック
     checkDate.setDate(checkDate.getDate() - 1);
   }
 
@@ -283,7 +289,6 @@ function renderCalendar() {
   calendarTitleEl.textContent = `${year}年 ${month + 1}月`;
   calendarGridEl.innerHTML = "";
 
-  // 曜日ヘッダー
   const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
   dayNames.forEach(d => {
     const dh = document.createElement("div");
@@ -296,14 +301,12 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const todayStr = getFormattedDate(new Date());
 
-  // 月初めのパディングセル
   for (let i = 0; i < firstDay; i++) {
     const emptyCell = document.createElement("div");
     emptyCell.className = "calendar-cell empty";
     calendarGridEl.appendChild(emptyCell);
   }
 
-  // 日付セル生成
   for (let day = 1; day <= daysInMonth; day++) {
     const cellDate = new Date(year, month, day);
     const dateStr = getFormattedDate(cellDate);
@@ -336,6 +339,12 @@ function changeMode(mode) {
   applyConfigUI();
 }
 
+function changeDeckSortOrder(order) {
+  userConfig.deckSortOrder = order;
+  saveConfig();
+  applyConfigUI();
+}
+
 function updateCharSpeed(speed) {
   userConfig.charSpeed = parseInt(speed, 10);
   speedValueDisplay.textContent = userConfig.charSpeed;
@@ -363,7 +372,13 @@ function renderMenu() {
   deckListEl.innerHTML = "";
   const now = Date.now();
 
-  decks.forEach(deck => {
+  // デッキのソート処理
+  let sortedDecks = [...decks];
+  if (userConfig.deckSortOrder === "RECENT") {
+    sortedDecks.sort((a, b) => (b.lastStudied || 0) - (a.lastStudied || 0));
+  }
+
+  sortedDecks.forEach(deck => {
     const dueCount = deck.cards.filter(c => !c.dueDate || c.dueDate <= now).length;
     const learnedCount = deck.cards.filter(c => c.interval >= 1).length;
     const retentionRate = deck.cards.length > 0 ? Math.round((learnedCount / deck.cards.length) * 100) : 0;
@@ -437,6 +452,7 @@ function showNewDeckModal() {
       id: "deck-" + Date.now(),
       title: title.trim(),
       orderMode: "SHUFFLE",
+      lastStudied: Date.now(),
       cards: []
     };
     decks.push(newDeck);
@@ -672,7 +688,16 @@ function deleteCard(cardId) {
   }
 }
 
-// --- 8. CSVインポート ---
+// --- 8. CSVインポートモーダル ---
+function openCsvImportModal() {
+  csvInput.value = "";
+  csvImportModal.classList.remove("hidden");
+}
+
+function closeCsvImportModal() {
+  csvImportModal.classList.add("hidden");
+}
+
 csvInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -704,17 +729,18 @@ csvInput.addEventListener("change", (e) => {
         id: "deck-" + Date.now(),
         title: file.name.replace(/\.[^/.]+$/, ""),
         orderMode: "SHUFFLE",
+        lastStudied: Date.now(),
         cards: newCards
       };
       
       decks.push(newDeck);
       saveDecks();
+      closeCsvImportModal();
       renderMenu();
-      alert(`デッキ「${newDeck.title}」を追加・保持しました！（${newCards.length}枚）`);
+      alert(`デッキ「${newDeck.title}」を追加しました！（${newCards.length}枚）`);
     } else {
       alert("有効なカードデータが見つかりませんでした。");
     }
-    csvInput.value = "";
   };
   reader.readAsText(file, "UTF-8");
 });
@@ -810,6 +836,10 @@ function startQuiz(deckId) {
     return;
   }
 
+  // デッキの最終学習日時を更新
+  currentDeck.lastStudied = Date.now();
+  saveDecks();
+
   const now = Date.now();
   let baseQueue = currentDeck.cards.filter(c => !c.dueDate || c.dueDate <= now);
 
@@ -854,7 +884,7 @@ function loadNextCard() {
   if (userConfig.mode === "FAST") {
     charIndex = 0;
     state = "TYPING";
-    tapHintEl.textContent = "画面をタップしてストップ";
+    tapHintEl.textContent = "画面のどこかをタップしてストップ！";
     startTime = Date.now();
 
     clearInterval(timer);
@@ -870,7 +900,7 @@ function loadNextCard() {
   } else {
     questionEl.textContent = currentCard.question;
     state = "STOPPED";
-    tapHintEl.textContent = "画面をタップして答えを表示";
+    tapHintEl.textContent = "画面のどこかをタップして答えを表示";
   }
 }
 
@@ -932,9 +962,12 @@ quizScreen.addEventListener("click", (event) => {
 function handleAnswer(rating) {
   if (!currentCard) return;
 
-  // 学習枚数をログに記録
-  recordStudyLog();
+  // デッキの最終学習日時を記録
+  if (currentDeck) {
+    currentDeck.lastStudied = Date.now();
+  }
 
+  recordStudyLog();
   calculateNextReview(currentCard, rating);
 
   if (rating === 'again') {
