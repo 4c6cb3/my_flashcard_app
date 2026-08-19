@@ -3,6 +3,7 @@ const defaultDecks = [
   {
     id: "deck-1",
     title: "雑学クイズ基本セット",
+    orderMode: "SHUFFLE", // "SHUFFLE" | "ORDER" | "WEAK"
     cards: [
       {
         id: "card-1",
@@ -28,18 +29,19 @@ const defaultDecks = [
   }
 ];
 
-// アプリ状態＆設定（デフォルトを NORMAL に設定）
+// アプリ状態＆設定
 let decks = [];
 let currentDeck = null;
 let studyQueue = [];
 let currentCard = null;
 let targetDeckForAddCard = null;
 let targetDeckForCardList = null;
+let targetDeckForSettings = null;
 let targetCardForEdit = null;
 
 let userConfig = {
   theme: "light",     // "light" | "dark"
-  mode: "NORMAL",     // デフォルトを "NORMAL" に変更
+  mode: "NORMAL",     // "NORMAL" | "FAST"
   charSpeed: 150      // 1文字あたりの表示スピード(ms)
 };
 
@@ -59,6 +61,7 @@ const quizScreen = document.getElementById("quiz-screen");
 const addCardModal = document.getElementById("add-card-modal");
 const editCardModal = document.getElementById("edit-card-modal");
 const cardListModal = document.getElementById("card-list-modal");
+const deckSettingsModal = document.getElementById("deck-settings-modal");
 
 const deckListEl = document.getElementById("deck-list");
 const csvInput = document.getElementById("csv-file-input");
@@ -94,6 +97,7 @@ const previewTextContainer = document.getElementById("preview-text-container");
 
 const cardListDeckTitle = document.getElementById("card-list-deck-title");
 const cardListContainer = document.getElementById("card-list-container");
+const deckSettingsTitle = document.getElementById("deck-settings-title");
 
 // --- 1. 初期化・保存 ---
 function initApp() {
@@ -109,6 +113,10 @@ function initApp() {
   if (savedDecks) {
     try {
       decks = JSON.parse(savedDecks);
+      // 古い形式のデータに出題順モードが指定されていない場合の補完
+      decks.forEach(d => {
+        if (!d.orderMode) d.orderMode = "SHUFFLE";
+      });
     } catch (e) {
       decks = defaultDecks;
     }
@@ -117,14 +125,7 @@ function initApp() {
     saveDecks();
   }
   
-  initAutoPrivateHandling();
   showMenu();
-}
-
-function initAutoPrivateHandling() {
-  if (decks && decks.length > 0) {
-    saveDecks();
-  }
 }
 
 function saveDecks() {
@@ -222,6 +223,10 @@ function renderMenu() {
     const learnedCount = deck.cards.filter(c => c.interval >= 1).length;
     const retentionRate = deck.cards.length > 0 ? Math.round((learnedCount / deck.cards.length) * 100) : 0;
 
+    let orderModeText = "シャッフル";
+    if (deck.orderMode === "ORDER") orderModeText = "登録順";
+    if (deck.orderMode === "WEAK") orderModeText = "苦手特化";
+
     const cardEl = document.createElement("div");
     cardEl.className = "deck-card";
     cardEl.innerHTML = `
@@ -230,7 +235,9 @@ function renderMenu() {
         <span class="deck-retention">定着率: ${retentionRate}%</span>
       </div>
       <div class="deck-count">総カード: ${deck.cards.length}枚 / 復習対象: ${dueCount}枚</div>
+      <div class="deck-mode-badge">出題順: ${orderModeText}</div>
       <div class="deck-manage-btns">
+        <button class="btn-small" onclick="openDeckSettingsModal('${deck.id}')">⚙ 出題設定</button>
         <button class="btn-small" onclick="openCardListModal('${deck.id}')">カード確認・編集</button>
         <button class="btn-small" onclick="openAddCardModal('${deck.id}')">カード追加</button>
         <button class="btn-small" onclick="renameDeck('${deck.id}')">名前変更</button>
@@ -243,13 +250,48 @@ function renderMenu() {
   });
 }
 
-// --- 5. デッキ・カード管理機能 ---
+// --- 5. デッキ・出題設定モーダル ---
+function openDeckSettingsModal(deckId) {
+  targetDeckForSettings = deckId;
+  const deck = decks.find(d => d.id === deckId);
+  if (!deck) return;
+
+  deckSettingsTitle.textContent = `デッキ: ${deck.title}`;
+  const currentMode = deck.orderMode || "SHUFFLE";
+  
+  const radio = document.querySelector(`input[name="deck-order-option"][value="${currentMode}"]`);
+  if (radio) radio.checked = true;
+
+  deckSettingsModal.classList.remove("hidden");
+}
+
+function closeDeckSettingsModal() {
+  deckSettingsModal.classList.add("hidden");
+  targetDeckForSettings = null;
+}
+
+function submitDeckSettings() {
+  if (!targetDeckForSettings) return;
+  const deck = decks.find(d => d.id === targetDeckForSettings);
+  if (!deck) return;
+
+  const selectedRadio = document.querySelector('input[name="deck-order-option"]:checked');
+  if (selectedRadio) {
+    deck.orderMode = selectedRadio.value;
+    saveDecks();
+    renderMenu();
+  }
+  closeDeckSettingsModal();
+}
+
+// --- 6. デッキ・カード管理機能 ---
 function showNewDeckModal() {
   const title = prompt("新しいデッキ名を入力してください:");
   if (title && title.trim()) {
     const newDeck = {
       id: "deck-" + Date.now(),
       title: title.trim(),
+      orderMode: "SHUFFLE",
       cards: []
     };
     decks.push(newDeck);
@@ -457,7 +499,7 @@ function deleteCard(cardId) {
   }
 }
 
-// --- 6. CSVインポート＆保持 ---
+// --- 7. CSVインポート ---
 csvInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -488,6 +530,7 @@ csvInput.addEventListener("change", (e) => {
       const newDeck = {
         id: "deck-" + Date.now(),
         title: file.name.replace(/\.[^/.]+$/, ""),
+        orderMode: "SHUFFLE",
         cards: newCards
       };
       
@@ -503,7 +546,7 @@ csvInput.addEventListener("change", (e) => {
   reader.readAsText(file, "UTF-8");
 });
 
-// --- 7. 忘却曲線アルゴリズム（SM-2 調整版） ---
+// --- 8. 忘却曲線アルゴリズム（SM-2 調整版） ---
 function calculateNextReview(card, rating) {
   const now = Date.now();
   const ONE_MINUTE = 60 * 1000;
@@ -561,7 +604,34 @@ function calculateNextReview(card, rating) {
   saveDecks();
 }
 
-// --- 8. クイズ制御 ---
+// --- 9. クイズ制御 & 出題順ソート ---
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function sortStudyQueue(cards, mode) {
+  const queue = [...cards];
+
+  if (mode === "SHUFFLE") {
+    return shuffleArray(queue);
+  } else if (mode === "WEAK") {
+    // 復習間隔（interval）が小さい順（まだ覚えていない・定着率が低い順）に並び替え
+    return queue.sort((a, b) => {
+      if (a.interval !== b.interval) {
+        return a.interval - b.interval;
+      }
+      return a.reps - b.reps;
+    });
+  } else {
+    // ORDER: 登録された順番のまま（ソートしない）
+    return queue;
+  }
+}
+
 function startQuiz(deckId) {
   currentDeck = decks.find(d => d.id === deckId);
   if (!currentDeck || currentDeck.cards.length === 0) {
@@ -570,15 +640,19 @@ function startQuiz(deckId) {
   }
 
   const now = Date.now();
-  studyQueue = currentDeck.cards.filter(c => !c.dueDate || c.dueDate <= now);
+  let baseQueue = currentDeck.cards.filter(c => !c.dueDate || c.dueDate <= now);
 
-  if (studyQueue.length === 0) {
+  if (baseQueue.length === 0) {
     if (confirm("今日の復習カードは完了しています！全カードを再練習しますか？")) {
-      studyQueue = [...currentDeck.cards];
+      baseQueue = [...currentDeck.cards];
     } else {
       return;
     }
   }
+
+  // 設定された出題モード（SHUFFLE / ORDER / WEAK）に応じて並び替え
+  const orderMode = currentDeck.orderMode || "SHUFFLE";
+  studyQueue = sortStudyQueue(baseQueue, orderMode);
 
   currentDeckTitleEl.textContent = currentDeck.title;
   hideAllScreens();
@@ -610,7 +684,7 @@ function loadNextCard() {
   if (userConfig.mode === "FAST") {
     charIndex = 0;
     state = "TYPING";
-    tapHintEl.textContent = "画面をタップして問題文をストップ";
+    tapHintEl.textContent = "画面のどこかをタップしてストップ！";
     startTime = Date.now();
 
     clearInterval(timer);
@@ -626,7 +700,7 @@ function loadNextCard() {
   } else {
     questionEl.textContent = currentCard.question;
     state = "STOPPED";
-    tapHintEl.textContent = "画面をタップして答えを表示";
+    tapHintEl.textContent = "画面のどこかをタップして答えを表示";
   }
 }
 
@@ -645,9 +719,8 @@ function searchOnGoogle(event) {
   }
 }
 
-// 画面全体のタップ処理（問題エリア以外・カード全体どこをタップしてもストップ＆回答表示可能）
+// 画面全体のタップ処理
 quizScreen.addEventListener("click", (event) => {
-  // ボタンやリンク、入力欄等の操作時はタップイベントを発火させない
   if (event.target.closest("button") || event.target.closest("a") || event.target.closest("input")) {
     return;
   }

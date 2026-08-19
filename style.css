@@ -168,6 +168,17 @@ header {
 .deck-count {
   font-size: 0.85rem;
   color: var(--text-sub);
+  margin-bottom: 8px;
+}
+
+.deck-mode-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  background: var(--bg-color);
+  border: 1px solid var(--card-border);
+  padding: 2px 8px;
+  border-radius: 4px;
   margin-bottom: 12px;
 }
 

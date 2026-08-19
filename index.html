@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>めもらいざー</title>
+  <title>aoki</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="theme-light">
@@ -12,7 +12,7 @@
     <!-- ================= フェーズ1: メインメニュー ================= -->
     <section id="menu-screen" class="screen">
       <header>
-        <h1 class="app-logo">めもらいざー</h1>
+        <h1 class="app-logo">aoki</h1>
       </header>
 
       <div class="menu-nav">
@@ -160,6 +160,32 @@
         </footer>
       </div>
     </section>
+
+    <!-- ================= モーダル: デッキ出題設定 ================= -->
+    <div id="deck-settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>⚙ 出題順設定</h3>
+        <p id="deck-settings-title" class="help-text" style="margin-bottom: 8px; font-weight: bold;"></p>
+        <div class="option-controls">
+          <label class="radio-label">
+            <input type="radio" name="deck-order-option" value="SHUFFLE">
+            <span>シャッフルモード（ランダム出題）</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="deck-order-option" value="ORDER">
+            <span>順番モード（リスト登録順）</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="deck-order-option" value="WEAK">
+            <span>苦手特化モード（定着率が低い順）</span>
+          </label>
+        </div>
+        <div class="modal-buttons" style="margin-top: 12px;">
+          <button class="btn-modal-cancel" onclick="closeDeckSettingsModal()">キャンセル</button>
+          <button class="btn-modal-submit" onclick="submitDeckSettings()">設定を保存</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ================= モーダル: カード手動追加 ================= -->
     <div id="add-card-modal" class="modal hidden">
