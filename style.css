@@ -70,27 +70,34 @@ header {
   letter-spacing: -0.05em;
 }
 
+/* オプションヘッダー修正：ボタンとタイトルの衝突回避 */
 .screen-header {
-  position: relative;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 20px;
 }
 
 .screen-header h2 {
   font-size: 1.2rem;
   color: var(--header-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: right;
 }
 
 .btn-back {
-  position: absolute;
-  left: 0;
-  top: 0;
   background: none;
   border: none;
   color: var(--accent-color);
   font-size: 0.9rem;
   cursor: pointer;
   font-weight: bold;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* メニューナビ */
@@ -134,12 +141,17 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   margin-bottom: 4px;
 }
 
 .deck-title {
   font-size: 1.1rem;
   font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
 }
 
 .deck-retention {
@@ -149,6 +161,8 @@ header {
   font-weight: bold;
   padding: 3px 8px;
   border-radius: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .deck-count {
@@ -303,10 +317,29 @@ header {
   margin-bottom: 12px;
 }
 
-/* クイズ画面 */
+/* クイズ画面ヘッダー：重なりバグ修正対応 */
 .quiz-header {
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 12px;
+}
+
+.quiz-header h2 {
+  font-size: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: center;
+}
+
+#progress-info {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .card {
@@ -495,19 +528,23 @@ header {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow: hidden;
 }
 
 .card-item-q {
   font-size: 0.9rem;
   font-weight: bold;
+  word-break: break-all;
 }
 
 .card-item-a {
   font-size: 0.85rem;
   color: #10b981;
+  word-break: break-all;
 }
 
 .card-item-exp {
   font-size: 0.75rem;
   color: var(--text-sub);
+  word-break: break-all;
 }

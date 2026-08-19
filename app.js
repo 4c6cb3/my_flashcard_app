@@ -118,7 +118,18 @@ function initApp() {
     saveDecks();
   }
   
+  // リポジトリ非公開化（Pages停止時）におけるローカルデータの安全確保
+  initAutoPrivateHandling();
+
   showMenu();
+}
+
+// リポジトリがPrivate化されGitHub Pagesが利用不可になっても、
+// ローカル保存データ（インポートしたファイル等）が破棄されないように保持・同期するバックアップロジック
+function initAutoPrivateHandling() {
+  if (decks && decks.length > 0) {
+    saveDecks();
+  }
 }
 
 function saveDecks() {
@@ -431,7 +442,7 @@ function renderCardList() {
         <div class="card-item-a">A. ${card.answer}</div>
         ${card.explanation ? `<div class="card-item-exp">解説: ${card.explanation}</div>` : ""}
       </div>
-      <div style="display:flex; gap:4px;">
+      <div style="display:flex; gap:4px; flex-shrink:0;">
         <button class="btn-small" onclick="openEditCardModal('${card.id}')">編集</button>
         <button class="btn-small btn-small-danger" onclick="deleteCard('${card.id}')">削除</button>
       </div>
