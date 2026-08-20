@@ -32,8 +32,18 @@ const defaultDecks = [
   }
 ];
 
+// 設定の初期定義（デフォルトテーマを "device" に設定）
+const DEFAULT_USER_CONFIG = {
+  theme: "device",
+  fontSize: 15,
+  mode: "NORMAL",
+  charSpeed: 150,
+  deckSortOrder: "RECENT"
+};
+
 // アプリ状態＆設定
 let decks = [];
+let trashDecks = [];
 let studyLogs = {}; // YYYY-MM-DD: 枚数
 let currentDeck = null;
 let studyQueue = [];
@@ -42,21 +52,16 @@ let targetDeckForAddCard = null;
 let targetDeckForCardList = null;
 let targetDeckForSettings = null;
 let targetCardForEdit = null;
-let currentEditingImageData = ""; // 一時保存用画像Base64
+let currentEditingImageData = "";
 
-// カレンダー表示月データ
 let currentCalendarDate = new Date();
 
-// カード一覧のページネーション管理
 let cardListPageIndex = 0;
 const CARDS_PER_PAGE = 100;
 
-let userConfig = {
-  theme: "light",          // "light" | "dark"
-  mode: "NORMAL",          // "NORMAL" | "FAST"
-  charSpeed: 150,          // 1文字あたりの表示スピード(ms)
-  deckSortOrder: "RECENT"  // "RECENT" (最近学習した順) | "CREATED" (追加・作成順)
-};
+let userConfig = { ...DEFAULT_USER_CONFIG };
+
+let tempFontSize = 15;
 
 let charIndex = 0;
 let timer = null;
@@ -77,6 +82,8 @@ const editCardModal = document.getElementById("edit-card-modal");
 const cardListModal = document.getElementById("card-list-modal");
 const deckSettingsModal = document.getElementById("deck-settings-modal");
 const csvImportModal = document.getElementById("csv-import-modal");
+const trashModal = document.getElementById("trash-modal");
+const trashListContainer = document.getElementById("trash-list-container");
 
 const deckListEl = document.getElementById("deck-list");
 const csvInput = document.getElementById("csv-file-input");
@@ -96,13 +103,11 @@ const statTimeEl = document.getElementById("stat-time");
 const buttonsEl = document.getElementById("action-buttons");
 const tapHintEl = document.getElementById("tap-hint");
 
-// 努力量（カレンダー）DOM要素
 const streakDaysEl = document.getElementById("streak-days");
 const streakMessageEl = document.getElementById("streak-message");
 const calendarTitleEl = document.getElementById("calendar-title");
 const calendarGridEl = document.getElementById("calendar-grid");
 
-// モーダル・設定用DOM要素
 const newCardQ = document.getElementById("new-card-q");
 const newCardA = document.getElementById("new-card-a");
 const newCardExp = document.getElementById("new-card-exp");
@@ -119,12 +124,15 @@ const charSpeedRange = document.getElementById("char-speed-range");
 const speedValueDisplay = document.getElementById("speed-value-display");
 const previewTextContainer = document.getElementById("preview-text-container");
 
+const fontSizeRange = document.getElementById("font-size-range");
+const fontSizeValueDisplay = document.getElementById("font-size-value-display");
+
 const cardListDeckTitle = document.getElementById("card-list-deck-title");
 const cardListContainer = document.getElementById("card-list-container");
 const cardPaginationEl = document.getElementById("card-pagination");
 const deckSettingsTitle = document.getElementById("deck-settings-title");
 
-// --- 画像のリサイズ・圧縮関数 ---
+// 画像のリサイズ・圧縮関数
 function resizeImage(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -164,7 +172,6 @@ function resizeImage(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
   });
 }
 
-// 画像選択時の処理設定
 if (editCardImgInput) {
   editCardImgInput.addEventListener("change", async (e) => {
     const file = e.target.files[0];
@@ -193,8 +200,14 @@ function initApp() {
   if (savedConfig) {
     try {
       userConfig = { ...userConfig, ...JSON.parse(savedConfig) };
+      if (typeof userConfig.fontSize === "string") {
+        if (userConfig.fontSize === "small") userConfig.fontSize = 14;
+        else if (userConfig.fontSize === "large") userConfig.fontSize = 20;
+        else userConfig.fontSize = 15;
+      }
     } catch (e) {}
   }
+  tempFontSize = userConfig.fontSize;
   applyConfigUI();
 
   const savedDecks = localStorage.getItem("aoki_decks");
@@ -213,6 +226,15 @@ function initApp() {
     saveDecks();
   }
 
+  const savedTrash = localStorage.getItem("aoki_trash_decks");
+  if (savedTrash) {
+    try {
+      trashDecks = JSON.parse(savedTrash);
+    } catch (e) {
+      trashDecks = [];
+    }
+  }
+
   const savedLogs = localStorage.getItem("aoki_logs");
   if (savedLogs) {
     try {
@@ -227,6 +249,10 @@ function initApp() {
 
 function saveDecks() {
   localStorage.setItem("aoki_decks", JSON.stringify(decks));
+}
+
+function saveTrashDecks() {
+  localStorage.setItem("aoki_trash_decks", JSON.stringify(trashDecks));
 }
 
 function saveConfig() {
@@ -256,8 +282,14 @@ function getFormattedDate(date) {
 function applyConfigUI() {
   document.body.className = `theme-${userConfig.theme}`;
   
+  document.documentElement.style.setProperty("--font-base", `${userConfig.fontSize}px`);
+  document.documentElement.style.setProperty("--preview-font-size", `${tempFontSize}px`);
+
   const themeRadio = document.querySelector(`input[name="theme-option"][value="${userConfig.theme}"]`);
   if (themeRadio) themeRadio.checked = true;
+
+  if (fontSizeRange) fontSizeRange.value = tempFontSize;
+  if (fontSizeValueDisplay) fontSizeValueDisplay.textContent = tempFontSize;
 
   const modeRadio = document.querySelector(`input[name="mode-option"][value="${userConfig.mode}"]`);
   if (modeRadio) modeRadio.checked = true;
@@ -277,7 +309,6 @@ function applyConfigUI() {
   charSpeedRange.value = userConfig.charSpeed;
   speedValueDisplay.textContent = userConfig.charSpeed;
 
-  // 速度調整エリアの表示/非表示切替のみを行い、ここでは自動再生しない
   if (userConfig.mode === "FAST") {
     speedOptionGroup.classList.remove("hidden");
   } else {
@@ -310,6 +341,7 @@ function showStats() {
 
 function showOption() {
   hideAllScreens();
+  tempFontSize = userConfig.fontSize;
   optionScreen.classList.remove("hidden");
   applyConfigUI();
   if (userConfig.mode === "FAST") {
@@ -416,6 +448,19 @@ function changeTheme(theme) {
   applyConfigUI();
 }
 
+function updateFontSizePreview(size) {
+  tempFontSize = parseInt(size, 10);
+  if (fontSizeValueDisplay) fontSizeValueDisplay.textContent = tempFontSize;
+  document.documentElement.style.setProperty("--preview-font-size", `${tempFontSize}px`);
+}
+
+function applyAndSaveFontSize() {
+  userConfig.fontSize = tempFontSize;
+  saveConfig();
+  applyConfigUI();
+  alert("文字サイズの設定をアプリ全体に保存・反映しました。");
+}
+
 function changeMode(mode) {
   userConfig.mode = mode;
   saveConfig();
@@ -453,12 +498,34 @@ function startPreviewTyping() {
   }, userConfig.charSpeed);
 }
 
+// 設定初期化処理関数
+function resetAllSettings() {
+  if (confirm("設定を初期状態に戻しますがよろしいですか？")) {
+    userConfig = { ...DEFAULT_USER_CONFIG };
+    tempFontSize = userConfig.fontSize;
+    saveConfig();
+    applyConfigUI();
+    if (userConfig.mode === "FAST") {
+      startPreviewTyping();
+    }
+    alert("設定を初期状態に戻しました。");
+  }
+}
+
 // --- 5. メインメニュー描画 ---
 function renderMenu() {
   deckListEl.innerHTML = "";
   const now = Date.now();
 
-  // デッキのソート処理
+  if (decks.length === 0) {
+    deckListEl.innerHTML = `
+      <div class="empty-deck-notice">
+        <p>まだデッキがありません。<br>「＋ 新規デッキ」や「📥 CSV追加」からデッキを追加して学習を始めましょう！</p>
+      </div>
+    `;
+    return;
+  }
+
   let sortedDecks = [...decks];
   if (userConfig.deckSortOrder === "RECENT") {
     sortedDecks.sort((a, b) => (b.lastStudied || 0) - (a.lastStudied || 0));
@@ -467,7 +534,10 @@ function renderMenu() {
   sortedDecks.forEach(deck => {
     const dueCount = deck.cards.filter(c => !c.dueDate || c.dueDate <= now).length;
     const learnedCount = deck.cards.filter(c => c.interval >= 1).length;
-    const retentionRate = deck.cards.length > 0 ? Math.round((learnedCount / deck.cards.length) * 100) : 0;
+    
+    const retentionRate = deck.cards.length > 0 
+      ? ((learnedCount / deck.cards.length) * 100).toFixed(2) 
+      : "0.00";
 
     let orderModeText = "シャッフル";
     if (deck.orderMode === "ORDER") orderModeText = "登録順";
@@ -577,16 +647,105 @@ function resetDeckProgress(deckId) {
 }
 
 function deleteDeck(deckId) {
-  const deck = decks.find(d => d.id === deckId);
-  if (!deck) return;
-  if (confirm(`デッキ「${deck.title}」を削除してもよろしいですか？`)) {
-    decks = decks.filter(d => d.id !== deckId);
+  const index = decks.findIndex(d => d.id === deckId);
+  if (index === -1) return;
+  const deck = decks[index];
+
+  if (confirm(`デッキ「${deck.title}」をごみ箱へ移動しますか？`)) {
+    const trashedItem = {
+      originalIndex: index,
+      deck: deck
+    };
+    trashDecks.push(trashedItem);
+    decks.splice(index, 1);
+
     saveDecks();
+    saveTrashDecks();
     renderMenu();
   }
 }
 
-// カード手動追加モーダル
+// ごみ箱モーダルの操作ロジック
+function openTrashModal() {
+  renderTrashList();
+  trashModal.classList.remove("hidden");
+}
+
+function closeTrashModal() {
+  trashModal.classList.add("hidden");
+}
+
+function renderTrashList() {
+  trashListContainer.innerHTML = "";
+  const clearAllBtn = document.getElementById("trash-clear-all-btn");
+
+  if (trashDecks.length === 0) {
+    trashListContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-sub);">ごみ箱は空です。</div>`;
+    if (clearAllBtn) clearAllBtn.style.display = "none";
+    return;
+  }
+
+  if (clearAllBtn) clearAllBtn.style.display = "inline-block";
+
+  trashDecks.forEach((item, index) => {
+    const trashEl = document.createElement("div");
+    trashEl.className = "trash-item";
+    trashEl.innerHTML = `
+      <div class="trash-item-info">
+        <span class="trash-item-title">${item.deck.title}</span>
+        <span class="trash-item-count">枚数: ${item.deck.cards ? item.deck.cards.length : 0}枚</span>
+      </div>
+      <div style="display:flex; gap:6px; flex-shrink:0;">
+        <button class="btn-small" onclick="restoreDeckFromTrash(${index})">復活</button>
+        <button class="btn-small btn-small-danger" onclick="permanentlyDeleteDeck(${index})">完全削除</button>
+      </div>
+    `;
+    trashListContainer.appendChild(trashEl);
+  });
+}
+
+function restoreDeckFromTrash(index) {
+  if (index < 0 || index >= trashDecks.length) return;
+  const item = trashDecks[index];
+
+  if (confirm("このデッキを復旧させますか？")) {
+    const originalIndex = item.originalIndex;
+
+    if (originalIndex !== undefined && originalIndex >= 0 && originalIndex <= decks.length) {
+      decks.splice(originalIndex, 0, item.deck);
+    } else {
+      decks.push(item.deck);
+    }
+
+    trashDecks.splice(index, 1);
+
+    saveDecks();
+    saveTrashDecks();
+    renderTrashList();
+    renderMenu();
+  }
+}
+
+function permanentlyDeleteDeck(index) {
+  if (index < 0 || index >= trashDecks.length) return;
+
+  if (confirm("このデッキを完全に消してもよいですか？この操作は取り消せません。")) {
+    trashDecks.splice(index, 1);
+    saveTrashDecks();
+    renderTrashList();
+  }
+}
+
+function clearAllTrash() {
+  if (trashDecks.length === 0) return;
+
+  if (confirm("ごみ箱内のデッキをすべて完全削除しますか？この操作は取り消せません。")) {
+    trashDecks = [];
+    saveTrashDecks();
+    renderTrashList();
+  }
+}
+
 function openAddCardModal(deckId) {
   targetDeckForAddCard = deckId;
   newCardQ.value = "";
@@ -629,7 +788,6 @@ function submitAddCard() {
   }
 }
 
-// カード編集モーダル制御
 function openEditModalForCard(card) {
   targetCardForEdit = card;
   editCardQ.value = card.question;
@@ -718,7 +876,6 @@ function submitEditCard() {
   closeEditCardModal();
 }
 
-// カード一覧モーダル制御（100件ごとページネーション対応）
 function openCardListModal(deckId) {
   targetDeckForCardList = deckId;
   cardListPageIndex = 0;
@@ -952,7 +1109,6 @@ function startQuiz(deckId) {
     return;
   }
 
-  // デッキの最終学習日時を更新
   currentDeck.lastStudied = Date.now();
   saveDecks();
 
@@ -1028,7 +1184,6 @@ function loadNextCard() {
   }
 }
 
-// Google検索実行
 function searchOnGoogle(event) {
   event.stopPropagation();
   
@@ -1043,7 +1198,6 @@ function searchOnGoogle(event) {
   }
 }
 
-// 画面全体のタップ処理
 quizScreen.addEventListener("click", (event) => {
   if (event.target.closest("button") || event.target.closest("a") || event.target.closest("input") || event.target.closest("textarea")) {
     return;
@@ -1082,11 +1236,9 @@ quizScreen.addEventListener("click", (event) => {
   }
 });
 
-// 回答ボタン処理
 function handleAnswer(rating) {
   if (!currentCard) return;
 
-  // デッキの最終学習日時を記録
   if (currentDeck) {
     currentDeck.lastStudied = Date.now();
   }
@@ -1104,5 +1256,4 @@ function handleAnswer(rating) {
   loadNextCard();
 }
 
-// アプリ起動
 initApp();

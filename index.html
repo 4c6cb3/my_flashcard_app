@@ -8,7 +8,7 @@
   <link rel="apple-touch-icon" href="logo_app.png">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-light">
+<body class="theme-device">
   <div class="container">
     
     <!-- ================= フェーズ1: メインメニュー ================= -->
@@ -20,7 +20,10 @@
       </header>
 
       <div class="menu-nav">
-        <button class="btn-secondary" onclick="showNewDeckModal()">＋ 新規デッキ</button>
+        <div style="display: flex; gap: 4px;">
+          <button class="btn-secondary" onclick="showNewDeckModal()">＋ 新規デッキ</button>
+          <button class="btn-secondary" onclick="openTrashModal()">🗑 ごみ箱</button>
+        </div>
         <div style="display: flex; gap: 4px;">
           <button class="btn-option-link" onclick="openCsvImportModal()">📥 CSV追加</button>
           <button class="btn-option-link" onclick="showStats()">📊 努力量</button>
@@ -67,12 +70,16 @@
         <h3>カラーテーマ</h3>
         <div class="option-controls">
           <label class="radio-label">
+            <input type="radio" name="theme-option" value="device" onchange="changeTheme('device')">
+            <span>デバイスの設定に従う（デフォルト）</span>
+          </label>
+          <label class="radio-label">
             <input type="radio" name="theme-option" value="light" onchange="changeTheme('light')">
-            <span>ホワイトベース</span>
+            <span>ライト</span>
           </label>
           <label class="radio-label">
             <input type="radio" name="theme-option" value="dark" onchange="changeTheme('dark')">
-            <span>ダークベース</span>
+            <span>ダーク</span>
           </label>
         </div>
       </div>
@@ -89,16 +96,13 @@
             <span>読み上げ風モード</span>
           </label>
         </div>
-        <!-- 選択中の説明が下に表示されるエリア -->
-        <p id="mode-description-text" class="mode-description" style="margin-top: 12px; font-size: 0.85rem; color: var(--text-sub);"></p>
+        <p id="mode-description-text" class="mode-description" style="margin-top: 12px; font-size: 0.85em; color: var(--text-sub);"></p>
       </div>
 
-
-      <!-- 読み上げ風モード時のみ表示する速度調整エリア -->
       <div id="speed-option-group" class="option-group hidden">
         <h3>文字表示スピード</h3>
         <div class="speed-control-container">
-          <label for="char-speed-range">表示速度: <span id="speed-value-display">150</span> ms/文字</label>
+          <label for="char-speed-range">表示速度: <span id="speed-value-display">150</span> ms/文字 <small style="color: var(--text-sub);">(デフォルト: 150 ms/文字)</small></label>
           <input type="range" id="char-speed-range" min="50" max="300" step="10" value="150" oninput="updateCharSpeed(this.value)">
           <div class="speed-labels">
             <span>速い (50ms)</span>
@@ -106,7 +110,6 @@
           </div>
         </div>
 
-        <!-- リアルタイムプレビュー表示エリア -->
         <div class="preview-box">
           <div class="preview-label">スピード確認プレビュー:</div>
           <div id="preview-text-container" class="preview-text"></div>
@@ -127,18 +130,44 @@
         </div>
       </div>
 
-      <!-- 競技クイズ者向けセクション -->
+      <div class="option-group">
+        <h3>アプリ全体の文字の大きさ</h3>
+        <div class="speed-control-container">
+          <label for="font-size-range">文字サイズ: <span id="font-size-value-display">15</span> px <small style="color: var(--text-sub);">(デフォルト: 15px)</small></label>
+          <input type="range" id="font-size-range" min="12" max="24" step="1" value="15" oninput="updateFontSizePreview(this.value)">
+          <div class="speed-labels">
+            <span>小 (12px)</span>
+            <span>大 (24px)</span>
+          </div>
+        </div>
+
+        <div class="preview-box" style="margin-top: 12px;">
+          <div class="preview-label">文字サイズ確認プレビュー:</div>
+          <div id="font-size-preview-box" class="preview-font-sample">
+            <div id="font-size-preview-q" class="preview-q-text">山梨県と静岡県にまたがる、日本で一番高い山は何でしょう？</div>
+            <div id="font-size-preview-a" class="preview-a-text">正解：富士山</div>
+          </div>
+        </div>
+
+        <button class="btn-start" style="margin-top: 12px;" onclick="applyAndSaveFontSize()">文字サイズの設定を保存</button>
+      </div>
+
       <div class="option-group">
         <h3>競技クイズ者向け</h3>
         <p class="help-text" style="margin-bottom: 8px;">問題集の購入・検索に役立つ外部サイトです。</p>
         <div class="external-link-buttons">
-          <a href="https://booth.pm/ja/search/%E3%82%AF%E3%82%A4%E3%82%BA%E5%95%8F%E9%A1%8C%E9%9B%86" target="_blank" rel="noopener noreferrer" class="btn-external-link">
+          <a href="https://booth.pm/ja/search/%E3%82%AF%E3%82%A4%E3%82%BA%E5%95%8F%E9%A1%81%E9%9B%86" target="_blank" rel="noopener noreferrer" class="btn-external-link">
             🛒 BOOTH (クイズ問題集検索) ↗
           </a>
           <a href="https://q-tak.com/" target="_blank" rel="noopener noreferrer" class="btn-external-link">
             🚚 クイズ宅急便 ↗
           </a>
         </div>
+      </div>
+
+      <!-- オプション最下部に設定初期化ボタン -->
+      <div class="option-group" style="text-align: center;">
+        <button class="btn-small btn-small-danger" style="width: 100%; padding: 10px;" onclick="resetAllSettings()">⚙ 設定を初期状態に戻す</button>
       </div>
     </section>
 
@@ -155,23 +184,19 @@
           <p id="question-text"></p>
         </div>
 
-        <!-- ストップ時の達成度・タイム表示 (早押しモード時) -->
         <div id="result-stats" class="stats hidden">
           <span id="stat-progress">達成度: --%</span> | 
           <span id="stat-time">タイム: --秒</span>
         </div>
 
-        <!-- 正解・解説・画像表示エリア -->
         <div id="answer-section" class="answer-section hidden">
           <hr>
           <h2>正解：<span id="answer-text"></span></h2>
-          <!-- 画像表示枠 -->
           <div id="answer-image-container" class="answer-image-container hidden">
             <img id="answer-image" src="" alt="参考画像" class="answer-img">
           </div>
           <p id="explanation-text"></p>
           
-          <!-- Google検索 ＆ カード編集ボタン -->
           <div class="search-btn-container" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
             <button id="google-search-btn" class="btn-small" style="background: var(--bg-color);" onclick="searchOnGoogle(event)">
               🔍 Googleで「<span id="search-term-text"></span>」を検索
@@ -183,11 +208,9 @@
         </div>
       </main>
 
-      <!-- 画面下部に固定・配置するエリア（ヒント＆難易度調整ボタン） -->
       <div class="quiz-footer">
         <div id="tap-hint" class="tap-hint">画面をタップして操作</div>
 
-        <!-- 4つの回答ボタン（画面最下部に配置） -->
         <footer id="action-buttons" class="button-grid hidden">
           <button class="btn btn-again" onclick="handleAnswer('again')">
             もう一度<small>&lt; 1分</small>
@@ -267,7 +290,6 @@
         <textarea id="edit-card-a" placeholder="答えを入力" class="input-field textarea-a"></textarea>
         <textarea id="edit-card-exp" placeholder="解説を入力（任意）" class="input-field textarea-exp"></textarea>
         
-        <!-- 画像アタッチメントフィールド -->
         <div class="image-upload-section">
           <label class="help-text">添付画像 (自動的にリサイズ・圧縮されます):</label>
           <input type="file" id="edit-card-img-input" accept="image/*" class="input-field">
@@ -288,11 +310,24 @@
     <div id="card-list-modal" class="modal hidden">
       <div class="modal-content modal-large">
         <h3 id="card-list-deck-title">登録カード一覧</h3>
-        <!-- ページネーションコントロール -->
         <div id="card-pagination" class="card-pagination"></div>
         <div id="card-list-container" class="card-list-container"></div>
         <div class="modal-buttons">
           <button class="btn-modal-cancel" onclick="closeCardListModal()">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- モーダル: ごみ箱モーダル -->
+    <div id="trash-modal" class="modal hidden">
+      <div class="modal-content modal-large">
+        <div class="trash-header">
+          <h3>🗑 ごみ箱 (削除済みデッキ)</h3>
+          <button id="trash-clear-all-btn" class="btn-small btn-small-danger" onclick="clearAllTrash()">まとめて削除</button>
+        </div>
+        <div id="trash-list-container" class="card-list-container"></div>
+        <div class="modal-buttons">
+          <button class="btn-modal-cancel" onclick="closeTrashModal()">閉じる</button>
         </div>
       </div>
     </div>
