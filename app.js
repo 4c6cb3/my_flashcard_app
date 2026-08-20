@@ -261,6 +261,15 @@ function applyConfigUI() {
 
   const modeRadio = document.querySelector(`input[name="mode-option"][value="${userConfig.mode}"]`);
   if (modeRadio) modeRadio.checked = true;
+  
+  const modeDescEl = document.getElementById("mode-description-text");
+  if (modeDescEl) {
+    if (userConfig.mode === "NORMAL") {
+      modeDescEl.textContent = "問題文全表示の単語帳のようなモード。";
+    } else if (userConfig.mode === "FAST") {
+      modeDescEl.textContent = "問題文が1文字ずつ表示されるモード。早押しクイズの形式を再現。";
+    }
+  }
 
   const sortRadio = document.querySelector(`input[name="sort-option"][value="${userConfig.deckSortOrder}"]`);
   if (sortRadio) sortRadio.checked = true;
@@ -268,9 +277,9 @@ function applyConfigUI() {
   charSpeedRange.value = userConfig.charSpeed;
   speedValueDisplay.textContent = userConfig.charSpeed;
 
+  // 速度調整エリアの表示/非表示切替のみを行い、ここでは自動再生しない
   if (userConfig.mode === "FAST") {
     speedOptionGroup.classList.remove("hidden");
-    startPreviewTyping();
   } else {
     speedOptionGroup.classList.add("hidden");
     clearInterval(previewTimer);
@@ -303,6 +312,9 @@ function showOption() {
   hideAllScreens();
   optionScreen.classList.remove("hidden");
   applyConfigUI();
+  if (userConfig.mode === "FAST") {
+    startPreviewTyping();
+  }
 }
 
 // --- 3. 努力量（可視化＆継続記録）制御 ---
@@ -408,6 +420,9 @@ function changeMode(mode) {
   userConfig.mode = mode;
   saveConfig();
   applyConfigUI();
+  if (mode === "FAST") {
+    startPreviewTyping();
+  }
 }
 
 function changeDeckSortOrder(order) {
