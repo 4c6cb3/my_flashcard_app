@@ -83,15 +83,16 @@
           <label class="radio-label">
             <input type="radio" name="mode-option" value="NORMAL" onchange="changeMode('NORMAL')">
             <span>ノーマルモード</span>
-            <p class="mode-description">問題文全表示の単語帳のようなモード。</p>
           </label>
           <label class="radio-label">
             <input type="radio" name="mode-option" value="FAST" onchange="changeMode('FAST')">
             <span>読み上げ風モード</span>
-            <p class="mode-description">問題文が1文字ずつ表示されるモード。早押しクイズの形式を再現。</p>
           </label>
         </div>
+        <!-- 選択中の説明が下に表示されるエリア -->
+        <p id="mode-description-text" class="mode-description" style="margin-top: 12px; font-size: 0.85rem; color: var(--text-sub);"></p>
       </div>
+
 
       <!-- 読み上げ風モード時のみ表示する速度調整エリア -->
       <div id="speed-option-group" class="option-group hidden">
