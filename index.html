@@ -152,6 +152,42 @@
         <button class="btn-start" style="margin-top: 12px;" onclick="applyAndSaveFontSize()">文字サイズの設定を保存</button>
       </div>
 
+      <!-- <!-- 変更点：パソコンでのキーボード操作案内セクションを追加 --> -->
+      <div class="option-group">
+        <h3>💻 パソコンでのキーボード操作</h3>
+        <p class="help-text" style="margin-bottom: 8px;">パソコン（キーボード）をご利用の場合、以下のショートカットキーで快適に操作いただけます。</p>
+        <table class="shortcut-table">
+          <thead>
+            <tr>
+              <th>操作</th>
+              <th>キー</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>問題のストップ / 解答の表示</td>
+              <td><span class="shortcut-key">Space</span> または <span class="shortcut-key">Enter</span></td>
+            </tr>
+            <tr>
+              <td>「もう一度」で回答</td>
+              <td><span class="shortcut-key">1</span> キー</td>
+            </tr>
+            <tr>
+              <td>「難しい」で回答</td>
+              <td><span class="shortcut-key">2</span> キー</td>
+            </tr>
+            <tr>
+              <td>「ふつう」で回答</td>
+              <td><span class="shortcut-key">3</span> キー</td>
+            </tr>
+            <tr>
+              <td>「簡単」で回答</td>
+              <td><span class="shortcut-key">4</span> キー</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <div class="option-group">
         <h3>競技クイズ者向け</h3>
         <p class="help-text" style="margin-bottom: 8px;">問題集の購入・検索に役立つ外部サイトです。</p>
@@ -212,20 +248,21 @@
       </main>
 
       <div class="quiz-footer">
-        <div id="tap-hint" class="tap-hint">画面をタップして操作</div>
+        <!-- 変更点：キーボード操作の補足テキスト表記にも反映 -->
+        <div id="tap-hint" class="tap-hint">画面タップ または [Space/Enter] キーで操作</div>
 
         <footer id="action-buttons" class="button-grid hidden">
           <button class="btn btn-again" onclick="handleAnswer('again')">
-            もう一度<small>&lt; 1分</small>
+            もう一度<small>&lt; 1分 [1]</small>
           </button>
           <button class="btn btn-hard" onclick="handleAnswer('hard')">
-            難しい<small>12時間後</small>
+            難しい<small>12時間後 [2]</small>
           </button>
           <button class="btn btn-good" onclick="handleAnswer('good')">
-            ふつう<small>1日後</small>
+            ふつう<small>1日後 [3]</small>
           </button>
           <button class="btn btn-easy" onclick="handleAnswer('easy')">
-            簡単<small>4日後</small>
+            簡単<small>4日後 [4]</small>
           </button>
         </footer>
       </div>

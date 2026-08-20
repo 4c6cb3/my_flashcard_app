@@ -462,6 +462,37 @@ header {
   color: var(--header-text);
 }
 
+/* --- 変更点：キーボード操作案内のスタイル定義を追加 --- */
+.shortcut-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.85em;
+}
+
+.shortcut-table th,
+.shortcut-table td {
+  padding: 8px;
+  border: 1px solid var(--card-border);
+  text-align: left;
+}
+
+.shortcut-table th {
+  background-color: var(--bg-color);
+  color: var(--header-text);
+}
+
+.shortcut-key {
+  display: inline-block;
+  background-color: var(--bg-color);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-weight: bold;
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
 .external-link-buttons {
   display: flex;
   flex-direction: column;

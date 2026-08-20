@@ -818,7 +818,7 @@ function openEditCardModal(cardId) {
 }
 
 function openEditCurrentQuizCard(event) {
-  event.stopPropagation();
+  if (event) event.stopPropagation();
   if (!currentCard) return;
   openEditModalForCard(currentCard);
 }
@@ -1164,7 +1164,8 @@ function loadNextCard() {
   if (userConfig.mode === "FAST") {
     charIndex = 0;
     state = "TYPING";
-    tapHintEl.textContent = "画面のどこかをタップしてストップ！";
+    /* --- 変更点：キーボード操作案内のテキストを更新 --- */
+    tapHintEl.textContent = "画面タップ または [Space/Enter] でストップ！";
     startTime = Date.now();
 
     clearInterval(timer);
@@ -1180,12 +1181,13 @@ function loadNextCard() {
   } else {
     questionEl.textContent = currentCard.question;
     state = "STOPPED";
-    tapHintEl.textContent = "画面のどこかをタップして答えを表示";
+    /* --- 変更点：キーボード操作案内のテキストを更新 --- */
+    tapHintEl.textContent = "画面タップ または [Space/Enter] で答えを表示";
   }
 }
 
 function searchOnGoogle(event) {
-  event.stopPropagation();
+  if (event) event.stopPropagation();
   
   if (!navigator.onLine) {
     alert("インターネット接続がありません。オンライン時にご利用いただけます。");
@@ -1198,11 +1200,8 @@ function searchOnGoogle(event) {
   }
 }
 
-quizScreen.addEventListener("click", (event) => {
-  if (event.target.closest("button") || event.target.closest("a") || event.target.closest("input") || event.target.closest("textarea")) {
-    return;
-  }
-
+// 共通の画面進行ロジック
+function advanceQuizState() {
   if (!currentCard) return;
 
   if (userConfig.mode === "FAST") {
@@ -1217,21 +1216,64 @@ quizScreen.addEventListener("click", (event) => {
       statProgressEl.textContent = `達成度: ${progressPercent}%`;
       statTimeEl.textContent = `タイム: ${elapsedSeconds}秒`;
       resultStatsEl.classList.remove("hidden");
-      tapHintEl.textContent = "もう一度タップで答えを表示";
+      /* --- 変更点：キーボード操作案内のテキストを更新 --- */
+      tapHintEl.textContent = "もう一度タップ または [Space/Enter] で答えを表示";
 
     } else if (state === "STOPPED") {
       questionEl.textContent = currentCard.question;
       answerSectionEl.classList.remove("hidden");
       buttonsEl.classList.remove("hidden");
       state = "REVEALED";
-      tapHintEl.textContent = "理解度を選んでください";
+      /* --- 変更点：キーボード操作案内のテキストを更新 --- */
+      tapHintEl.textContent = "理解度（数字キー 1〜4）を選んでください";
     }
   } else {
     if (state === "STOPPED") {
       answerSectionEl.classList.remove("hidden");
       buttonsEl.classList.remove("hidden");
       state = "REVEALED";
-      tapHintEl.textContent = "理解度を選んでください";
+      /* --- 変更点：キーボード操作案内のテキストを更新 --- */
+      tapHintEl.textContent = "理解度（数字キー 1〜4）を選んでください";
+    }
+  }
+}
+
+quizScreen.addEventListener("click", (event) => {
+  if (event.target.closest("button") || event.target.closest("a") || event.target.closest("input") || event.target.closest("textarea")) {
+    return;
+  }
+  advanceQuizState();
+});
+
+/* --- 変更点：パソコン用キーボードイベントリスナーの追加 --- */
+document.addEventListener("keydown", (event) => {
+  // モーダルが開いている場合や入力フォームフォーカス時はショートカットを無効化
+  const activeEl = document.activeElement;
+  const isInputActive = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.tagName === "SELECT");
+  
+  if (isInputActive) return;
+
+  // クイズ画面表示中のキーボード操作
+  if (!quizScreen.classList.contains("hidden")) {
+    if (event.code === "Space" || event.code === "Enter") {
+      event.preventDefault();
+      if (state !== "REVEALED") {
+        advanceQuizState();
+      }
+    } else if (state === "REVEALED") {
+      if (event.key === "1") {
+        event.preventDefault();
+        handleAnswer('again');
+      } else if (event.key === "2") {
+        event.preventDefault();
+        handleAnswer('hard');
+      } else if (event.key === "3") {
+        event.preventDefault();
+        handleAnswer('good');
+      } else if (event.key === "4") {
+        event.preventDefault();
+        handleAnswer('easy');
+      }
     }
   }
 });
