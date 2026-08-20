@@ -729,7 +729,7 @@ function restoreDeckFromTrash(index) {
 function permanentlyDeleteDeck(index) {
   if (index < 0 || index >= trashDecks.length) return;
 
-  if (confirm("このデッキを完全に消してもよいですか？この操作は取り消せません。")) {
+  if (confirm("Warning:このデッキを完全に消してもよいですか？この操作は取り消せません。")) {
     trashDecks.splice(index, 1);
     saveTrashDecks();
     renderTrashList();
@@ -739,7 +739,7 @@ function permanentlyDeleteDeck(index) {
 function clearAllTrash() {
   if (trashDecks.length === 0) return;
 
-  if (confirm("ごみ箱内のデッキをすべて完全削除しますか？この操作は取り消せません。")) {
+  if (confirm("Warning:ごみ箱内のデッキをすべて完全削除しますか？この操作は取り消せません。")) {
     trashDecks = [];
     saveTrashDecks();
     renderTrashList();
@@ -765,7 +765,7 @@ function submitAddCard() {
   const exp = newCardExp.value.trim();
 
   if (!q || !a) {
-    alert("問題文と答えは必須です。");
+    alert("Error:問題文と答えは必須です。");
     return;
   }
 
@@ -837,7 +837,7 @@ function submitEditCard() {
   const exp = editCardExp.value.trim();
 
   if (!q || !a) {
-    alert("問題文と答えは必須です。");
+    alert("Error:問題文と答えは必須です。");
     return;
   }
 
@@ -849,7 +849,7 @@ function submitEditCard() {
   try {
     saveDecks();
   } catch (e) {
-    alert("容量の上限に達したため保存できませんでした。画像を削除するかサイズを下げてください。");
+    alert("Error:容量の上限に達したため保存できませんでした。画像を削除するかサイズを下げてください。");
     return;
   }
 

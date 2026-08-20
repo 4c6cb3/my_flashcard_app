@@ -837,3 +837,11 @@ header {
   font-size: 0.8em;
   color: var(--text-sub);
 }
+
+.app-footer-credit {
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--text-sub);
+  margin-top: 15px;
+  margin-bottom: 5px;
+}
