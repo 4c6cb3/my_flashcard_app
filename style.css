@@ -484,6 +484,20 @@ header {
   margin-bottom: 8px;
 }
 
+/* 回答画面の画像表示エリア */
+.answer-image-container {
+  margin: 12px 0;
+  text-align: center;
+}
+
+.answer-img {
+  max-width: 100%;
+  max-height: 250px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  object-fit: contain;
+}
+
 .quiz-footer {
   margin-top: 16px;
   display: flex;
@@ -579,6 +593,28 @@ header {
 .textarea-a { min-height: 60px; }
 .textarea-exp { min-height: 80px; }
 
+/* 編集モーダル内 画像プレビュー */
+.image-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.img-preview-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.edit-img-preview {
+  max-width: 100px;
+  max-height: 80px;
+  border-radius: 6px;
+  border: 1px solid var(--card-border);
+  object-fit: cover;
+}
+
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
@@ -660,4 +696,10 @@ header {
   color: var(--text-sub);
   word-break: break-all;
   white-space: pre-wrap;
+}
+
+.card-item-img-badge {
+  font-size: 0.7rem;
+  color: var(--accent-color);
+  font-weight: bold;
 }

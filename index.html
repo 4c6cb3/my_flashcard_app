@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>memoly</title>
-  <!-- ファビコン（アプリロゴ）の設定 -->
-  <link rel="icon" href="logo_app.png" type="image/png">
+  <link rel="icon" href="logo_web.png" type="image/png">
   <link rel="apple-touch-icon" href="logo_app.png">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -159,10 +158,14 @@
           <span id="stat-time">タイム: --秒</span>
         </div>
 
-        <!-- 正解・解説表示エリア -->
+        <!-- 正解・解説・画像表示エリア -->
         <div id="answer-section" class="answer-section hidden">
           <hr>
           <h2>正解：<span id="answer-text"></span></h2>
+          <!-- 画像表示枠 -->
+          <div id="answer-image-container" class="answer-image-container hidden">
+            <img id="answer-image" src="" alt="参考画像" class="answer-img">
+          </div>
           <p id="explanation-text"></p>
           
           <!-- Google検索 ＆ カード編集ボタン -->
@@ -260,6 +263,17 @@
         <textarea id="edit-card-q" placeholder="問題文を入力" class="input-field textarea-q"></textarea>
         <textarea id="edit-card-a" placeholder="答えを入力" class="input-field textarea-a"></textarea>
         <textarea id="edit-card-exp" placeholder="解説を入力（任意）" class="input-field textarea-exp"></textarea>
+        
+        <!-- 画像アタッチメントフィールド -->
+        <div class="image-upload-section">
+          <label class="help-text">添付画像 (自動的にリサイズ・圧縮されます):</label>
+          <input type="file" id="edit-card-img-input" accept="image/*" class="input-field">
+          <div id="edit-card-img-preview" class="img-preview-container hidden">
+            <img id="edit-card-img-element" src="" alt="プレビュー" class="edit-img-preview">
+            <button class="btn-small btn-small-danger" onclick="removeEditCardImage()">画像を削除</button>
+          </div>
+        </div>
+
         <div class="modal-buttons">
           <button class="btn-modal-cancel" onclick="closeEditCardModal()">キャンセル</button>
           <button class="btn-modal-submit" onclick="submitEditCard()">更新</button>

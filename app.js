@@ -11,6 +11,7 @@ const defaultDecks = [
         question: "日本の現在の首都として事実上機能している、関東地方に位置する都道府県はどこでしょう？",
         answer: "東京都",
         explanation: "人口は約1400万人で、日本の政治・経済の中心地です。",
+        image: "",
         dueDate: 0,
         interval: 0,
         easeFactor: 2.5,
@@ -21,6 +22,7 @@ const defaultDecks = [
         question: "太陽系で最も大きい、木星型惑星の代表格は何でしょう？",
         answer: "木星",
         explanation: "主に水素とヘリウムでできており、大赤斑という巨大な嵐が存在します。",
+        image: "",
         dueDate: 0,
         interval: 0,
         easeFactor: 2.5,
@@ -40,6 +42,7 @@ let targetDeckForAddCard = null;
 let targetDeckForCardList = null;
 let targetDeckForSettings = null;
 let targetCardForEdit = null;
+let currentEditingImageData = ""; // 一時保存用画像Base64
 
 // カレンダー表示月データ
 let currentCalendarDate = new Date();
@@ -84,6 +87,8 @@ const questionEl = document.getElementById("question-text");
 const answerSectionEl = document.getElementById("answer-section");
 const answerTextEl = document.getElementById("answer-text");
 const explanationTextEl = document.getElementById("explanation-text");
+const answerImageContainer = document.getElementById("answer-image-container");
+const answerImageEl = document.getElementById("answer-image");
 const searchTermTextEl = document.getElementById("search-term-text");
 const resultStatsEl = document.getElementById("result-stats");
 const statProgressEl = document.getElementById("stat-progress");
@@ -105,6 +110,9 @@ const newCardExp = document.getElementById("new-card-exp");
 const editCardQ = document.getElementById("edit-card-q");
 const editCardA = document.getElementById("edit-card-a");
 const editCardExp = document.getElementById("edit-card-exp");
+const editCardImgInput = document.getElementById("edit-card-img-input");
+const editCardImgPreview = document.getElementById("edit-card-img-preview");
+const editCardImgElement = document.getElementById("edit-card-img-element");
 
 const speedOptionGroup = document.getElementById("speed-option-group");
 const charSpeedRange = document.getElementById("char-speed-range");
@@ -115,6 +123,69 @@ const cardListDeckTitle = document.getElementById("card-list-deck-title");
 const cardListContainer = document.getElementById("card-list-container");
 const cardPaginationEl = document.getElementById("card-pagination");
 const deckSettingsTitle = document.getElementById("deck-settings-title");
+
+// --- 画像のリサイズ・圧縮関数 ---
+function resizeImage(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+}
+
+// 画像選択時の処理設定
+if (editCardImgInput) {
+  editCardImgInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      currentEditingImageData = await resizeImage(file);
+      editCardImgElement.src = currentEditingImageData;
+      editCardImgPreview.classList.remove("hidden");
+    } catch (err) {
+      alert("画像の読み込みに失敗しました。");
+    }
+  });
+}
+
+function removeEditCardImage() {
+  currentEditingImageData = "";
+  editCardImgInput.value = "";
+  editCardImgElement.src = "";
+  editCardImgPreview.classList.add("hidden");
+}
 
 // --- 1. 初期化・保存 ---
 function initApp() {
@@ -531,6 +602,7 @@ function submitAddCard() {
       question: q,
       answer: a,
       explanation: exp,
+      image: "",
       dueDate: 0,
       interval: 0,
       easeFactor: 2.5,
@@ -548,6 +620,18 @@ function openEditModalForCard(card) {
   editCardQ.value = card.question;
   editCardA.value = card.answer;
   editCardExp.value = card.explanation || "";
+  
+  editCardImgInput.value = "";
+  currentEditingImageData = card.image || "";
+
+  if (currentEditingImageData) {
+    editCardImgElement.src = currentEditingImageData;
+    editCardImgPreview.classList.remove("hidden");
+  } else {
+    editCardImgElement.src = "";
+    editCardImgPreview.classList.add("hidden");
+  }
+
   editCardModal.classList.remove("hidden");
 }
 
@@ -569,6 +653,7 @@ function openEditCurrentQuizCard(event) {
 function closeEditCardModal() {
   editCardModal.classList.add("hidden");
   targetCardForEdit = null;
+  currentEditingImageData = "";
 }
 
 function submitEditCard() {
@@ -586,14 +671,28 @@ function submitEditCard() {
   targetCardForEdit.question = q;
   targetCardForEdit.answer = a;
   targetCardForEdit.explanation = exp;
+  targetCardForEdit.image = currentEditingImageData;
 
-  saveDecks();
+  try {
+    saveDecks();
+  } catch (e) {
+    alert("容量の上限に達したため保存できませんでした。画像を削除するかサイズを下げてください。");
+    return;
+  }
 
   if (currentCard && currentCard.id === targetCardForEdit.id) {
     questionEl.textContent = targetCardForEdit.question;
     answerTextEl.textContent = targetCardForEdit.answer;
     explanationTextEl.textContent = targetCardForEdit.explanation;
     searchTermTextEl.textContent = targetCardForEdit.answer;
+
+    if (targetCardForEdit.image) {
+      answerImageEl.src = targetCardForEdit.image;
+      answerImageContainer.classList.remove("hidden");
+    } else {
+      answerImageEl.src = "";
+      answerImageContainer.classList.add("hidden");
+    }
   }
 
   if (targetDeckForCardList) {
@@ -660,6 +759,7 @@ function renderCardList() {
         <div class="card-item-q">${absoluteIndex}. Q. ${card.question}</div>
         <div class="card-item-a">A. ${card.answer}</div>
         ${card.explanation ? `<div class="card-item-exp">解説: ${card.explanation}</div>` : ""}
+        ${card.image ? `<div class="card-item-img-badge">📷 画像あり</div>` : ""}
       </div>
       <div style="display:flex; gap:4px; flex-shrink:0;">
         <button class="btn-small" onclick="openEditCardModal('${card.id}')">編集</button>
@@ -716,6 +816,7 @@ csvInput.addEventListener("change", (e) => {
           question: parts[0],
           answer: parts[1],
           explanation: parts[2] || "",
+          image: "",
           dueDate: 0,
           interval: 0,
           easeFactor: 2.5,
@@ -874,6 +975,14 @@ function loadNextCard() {
   questionEl.textContent = "";
   answerTextEl.textContent = currentCard.answer;
   explanationTextEl.textContent = currentCard.explanation;
+
+  if (currentCard.image) {
+    answerImageEl.src = currentCard.image;
+    answerImageContainer.classList.remove("hidden");
+  } else {
+    answerImageEl.src = "";
+    answerImageContainer.classList.add("hidden");
+  }
 
   searchTermTextEl.textContent = currentCard.answer;
 
