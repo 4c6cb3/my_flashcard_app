@@ -93,6 +93,10 @@ let isHolding = false;
 let didHold = false;
 let aCharIndex = 0;
 
+// ゴーストクリック・スクロール防止用フラグ
+let isTouchDevice = false;
+let isScrolling = false;
+
 const SAMPLE_PREVIEW_TEXT = '山梨県と静岡県にまたがる、日本で一番高い山は何でしょう？';
 
 // DOM要素
@@ -1357,7 +1361,6 @@ function startHoldAction() {
 
     const qArr = [...currentCard.question];
     
-    // FASTモード かつ charIndexが問題文の全長に達していない場合（フェーズA）
     if (userConfig.mode === 'FAST' && charIndex < qArr.length) {
       if (state === 'TYPING') {
         clearInterval(timer);
@@ -1375,7 +1378,6 @@ function startHoldAction() {
       }, holdMs);
 
     } else if (state === 'STOPPED') {
-      // (フェーズB) FASTで出きった状態 または ノーマルモード
       if (answerSectionEl) {
         answerSectionEl.classList.remove('hidden');
         answerSectionEl.classList.add('holding-only-answer');
@@ -1405,10 +1407,8 @@ function endHoldAction() {
     const qArr = [...currentCard.question];
     
     if (userConfig.mode === 'FAST' && charIndex < qArr.length) {
-      // フェーズ A: 途中で指を離した
       finishTypingUI();
     } else if (state === 'STOPPED') {
-      // フェーズ B: 答え表示中に指を離した
       if (answerSectionEl) {
         answerSectionEl.classList.remove('holding-only-answer');
         answerSectionEl.classList.add('hidden');
@@ -1422,24 +1422,40 @@ function setupEventListeners() {
 
   if (quizCardEl) {
     quizCardEl.addEventListener('mousedown', (e) => {
+      if (isTouchDevice) return;
       if (e.target.closest('button') || e.target.closest('a')) return;
       startHoldAction();
     });
     quizCardEl.addEventListener('mouseup', (e) => {
+      if (isTouchDevice) return;
       if (e.target.closest('button') || e.target.closest('a')) return;
       endHoldAction();
       if (!didHold) advanceQuizState();
     });
-    quizCardEl.addEventListener('mouseleave', () => endHoldAction());
+    quizCardEl.addEventListener('mouseleave', () => {
+      if (isTouchDevice) return;
+      endHoldAction();
+    });
 
     quizCardEl.addEventListener('touchstart', (e) => {
+      isTouchDevice = true;
+      isScrolling = false;
       if (e.target.closest('button') || e.target.closest('a')) return;
       startHoldAction();
     }, { passive: true });
+    
+    quizCardEl.addEventListener('touchmove', () => {
+      isScrolling = true;
+      endHoldAction();
+    }, { passive: true });
+
     quizCardEl.addEventListener('touchend', (e) => {
       if (e.target.closest('button') || e.target.closest('a')) return;
       endHoldAction();
-      if (!didHold) advanceQuizState();
+      
+      if (!isScrolling && !didHold) advanceQuizState();
+      
+      setTimeout(() => { isTouchDevice = false; }, 500);
     });
   }
 
