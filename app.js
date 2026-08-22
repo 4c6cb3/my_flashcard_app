@@ -93,7 +93,9 @@ let isHolding = false;
 let didHold = false;
 let aCharIndex = 0;
 
-// ゴーストクリック・スクロール防止用フラグ
+// タッチブレ判定用座標
+let touchStartX = 0;
+let touchStartY = 0;
 let isTouchDevice = false;
 let isScrolling = false;
 
@@ -330,8 +332,6 @@ async function initApp() {
   if (savedConfig) {
     userConfig = { ...DEFAULT_USER_CONFIG, ...savedConfig };
     if (typeof userConfig.fontSize === 'string') userConfig.fontSize = 15;
-    
-    // 💡 修正ポイント：配列の設定破壊を防ぐためのディープコピー
     if (!userConfig.keyBinds) {
       userConfig.keyBinds = JSON.parse(JSON.stringify(DEFAULT_KEY_BINDS));
     }
@@ -655,7 +655,6 @@ function startPreviewTyping() {
 
 function resetAllSettings() {
   if (confirm('設定を初期状態に戻しますがよろしいですか？')) {
-    // 💡 修正ポイント：設定のディープコピー
     userConfig = { ...DEFAULT_USER_CONFIG, keyBinds: JSON.parse(JSON.stringify(DEFAULT_KEY_BINDS)) };
     tempFontSize = userConfig.fontSize;
     saveConfig(); applyConfigUI();
@@ -694,7 +693,6 @@ function startKeyBinding(action) {
 }
 
 function resetKeyBinds() {
-  // 💡 修正ポイント：設定のディープコピー
   userConfig.keyBinds = JSON.parse(JSON.stringify(DEFAULT_KEY_BINDS));
   saveConfig(); updateKeyBindButtons(); alert('キー割り当てをデフォルトに戻しました。');
 }
@@ -1211,6 +1209,7 @@ function loadNextCard() {
     charIndex = 0; state = 'TYPING';
     if (tapHintEl) tapHintEl.textContent = '画面タップ または キー操作でストップ！';
     startTime = Date.now();
+    stopTime = 0;
     clearInterval(timer);
     
     const chars = [...currentCard.question]; 
@@ -1218,7 +1217,14 @@ function loadNextCard() {
       if (charIndex < chars.length) {
         if (questionEl) questionEl.textContent += chars[charIndex];
         charIndex++;
-      } else clearInterval(timer);
+      } else {
+        // 💡 読み上げ完了時に確実に停止状態へ移行
+        clearInterval(timer);
+        if (state === 'TYPING') {
+          finishTypingUI();
+          state = 'STOPPED';
+        }
+      }
     }, userConfig.charSpeed);
   } else {
     charIndex = [...currentCard.question].length;
@@ -1234,8 +1240,9 @@ function searchOnGoogle(event) {
   if (currentCard && currentCard.answer) window.open(`https://www.google.com/search?q=${encodeURIComponent(currentCard.answer)}`, '_blank');
 }
 
+// 💡 タイム計算ロジック（stopTimeが未確定の時のみ現在時刻を記録）
 function finishTypingUI() {
-  stopTime = Date.now();
+  if (!stopTime) stopTime = Date.now();
   const elapsedSeconds = ((stopTime - startTime) / 1000).toFixed(1);
   const totalLen = [...currentCard.question].length;
   const progressPercent = Math.round((charIndex / totalLen) * 100);
@@ -1250,13 +1257,12 @@ function finishTypingUI() {
 
 function advanceQuizState() {
   if (!currentCard) return;
-  const longPressSuffix = userConfig.enableLongPress ? '（長押しで文字送り）' : '';
 
   if (userConfig.mode === 'FAST') {
     if (state === 'TYPING') {
       clearInterval(timer);
-      state = 'STOPPED';
       finishTypingUI();
+      state = 'STOPPED';
     } else if (state === 'STOPPED') {
       if (questionEl) questionEl.textContent = currentCard.question;
       charIndex = [...currentCard.question].length;
@@ -1350,7 +1356,7 @@ function updateUndoRedoUI() {
 }
 
 // =====================================================================
-// 長押しのカスタム挙動
+// 💡 長押しのカスタム挙動（仕様A・Bの完全対応）
 // =====================================================================
 function startHoldAction() {
   if (!userConfig.enableLongPress || !currentCard) return;
@@ -1367,31 +1373,38 @@ function startHoldAction() {
 
     const qArr = [...currentCard.question];
     
+    // 【仕様A】読み上げ風モード かつ 問題文が途中の時
     if (userConfig.mode === 'FAST' && charIndex < qArr.length) {
       if (state === 'TYPING') {
         clearInterval(timer);
+        finishTypingUI(); // 💡 長押し開始時点のタイムを即確定
         state = 'STOPPED';
       }
       
+      // 問題文の続きを1文字ずつ表示
       holdInterval = setInterval(() => {
         if (charIndex < qArr.length) {
           if (questionEl) questionEl.textContent += qArr[charIndex];
           charIndex++;
         } else {
+          // 最後（？など）まで出切ったら長押しタイマー停止（答えは出さずにストップ）
           clearInterval(holdInterval);
           finishTypingUI();
         }
       }, holdMs);
 
+    // 【仕様B】ノーマルモード または 問題文が出切っている時
     } else if (state === 'STOPPED') {
       if (answerSectionEl) {
         answerSectionEl.classList.remove('hidden');
-        answerSectionEl.classList.add('holding-only-answer');
+        answerSectionEl.classList.add('holding-only-answer'); // ボタン類を隠して答えだけを表示
       }
       if (answerTextEl) answerTextEl.textContent = '';
       aCharIndex = 0;
       
       const ansArr = [...currentCard.answer];
+      
+      // 答えを1文字ずつ表示
       holdInterval = setInterval(() => {
         if (aCharIndex < ansArr.length) {
           if (answerTextEl) answerTextEl.textContent += ansArr[aCharIndex];
@@ -1415,6 +1428,7 @@ function endHoldAction() {
     if (userConfig.mode === 'FAST' && charIndex < qArr.length) {
       finishTypingUI();
     } else if (state === 'STOPPED') {
+      // 答えのチラ見終了：指を離したら答えを再び隠す
       if (answerSectionEl) {
         answerSectionEl.classList.remove('holding-only-answer');
         answerSectionEl.classList.add('hidden');
@@ -1427,21 +1441,21 @@ function setupEventListeners() {
   const quizCardEl = document.getElementById('quiz-card');
 
   if (quizCardEl) {
-    // 💡 1. 右クリック・長押しメニューを完全に無効化
+    // 右クリック・長押しメニューをブロック
     quizCardEl.addEventListener('contextmenu', (e) => {
       if (!e.target.closest('input') && !e.target.closest('textarea')) {
         e.preventDefault();
       }
     });
 
-    // 💡 2. テキスト選択の開始イベント自体をブロック
+    // テキスト選択開始をブロック
     quizCardEl.addEventListener('selectstart', (e) => {
       if (!e.target.closest('input') && !e.target.closest('textarea')) {
         e.preventDefault();
       }
     });
 
-    // 💡 3. 長押し中に万が一選択が走った場合も即時クリア
+    // 万が一の選択範囲を即クリア
     document.addEventListener('selectionchange', () => {
       if (isHolding) {
         const sel = window.getSelection();
@@ -1455,35 +1469,44 @@ function setupEventListeners() {
       if (e.target.closest('button') || e.target.closest('a')) return;
       startHoldAction();
     });
-    
     quizCardEl.addEventListener('mouseup', (e) => {
       if (isTouchDevice) return;
       if (e.target.closest('button') || e.target.closest('a')) return;
       endHoldAction();
       if (!didHold) advanceQuizState();
     });
-    
     quizCardEl.addEventListener('mouseleave', () => {
       if (isTouchDevice) return;
       endHoldAction();
     });
 
-    // タッチ操作（スマホ用）
+    // 💡 タッチ操作（iPhone・スマホ用）：微小な指ブレを無視するロジック
     quizCardEl.addEventListener('touchstart', (e) => {
       isTouchDevice = true;
       isScrolling = false;
       if (e.target.closest('button') || e.target.closest('a')) return;
       
-      // 選択状態のクリア
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      
       const sel = window.getSelection();
       if (sel) sel.removeAllRanges();
       
       startHoldAction();
     }, { passive: true });
     
-    quizCardEl.addEventListener('touchmove', () => {
-      isScrolling = true;
-      endHoldAction();
+    quizCardEl.addEventListener('touchmove', (e) => {
+      if (!isHolding && !holdTimer) return;
+      const touch = e.touches[0];
+      const moveX = Math.abs(touch.clientX - touchStartX);
+      const moveY = Math.abs(touch.clientY - touchStartY);
+      
+      // 💡 指が10px以上スワイプされた時だけスクロールとみなしてキャンセル
+      if (moveX > 10 || moveY > 10) {
+        isScrolling = true;
+        endHoldAction();
+      }
     }, { passive: true });
 
     quizCardEl.addEventListener('touchend', (e) => {
