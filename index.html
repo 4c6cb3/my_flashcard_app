@@ -13,247 +13,201 @@
     
     <!-- ================= フェーズ1: メインメニュー ================= -->
     <section id="menu-screen" class="screen">
-      <div class="fixed-header-area">
-        <header>
-          <h1 class="app-logo">
-            <img src="logo_hedder.png" alt="memoly" class="app-logo-img">
-          </h1>
-        </header>
+      <header>
+        <h1 class="app-logo">
+          <img src="logo_hedder.png" alt="memoly" class="app-logo-img">
+        </h1>
+      </header>
 
-        <div class="menu-nav">
-          <div style="display: flex; gap: 4px;">
-            <button class="btn-secondary" onclick="showNewDeckModal()">＋作成</button>
-            <button class="btn-secondary" onclick="openTrashModal()">🗑ゴミ箱</button>
-          </div>
-          <div style="display: flex; gap: 4px;">
-            <button class="btn-option-link" onclick="openCsvImportModal()">📥CSV</button>
-            <button class="btn-option-link" onclick="showStats()">📊記録</button>
-            <button class="btn-option-link" onclick="showOption()">⚙設定</button>
-          </div>
+      <div class="menu-nav">
+        <div style="display: flex; gap: 4px;">
+          <button class="btn-secondary" onclick="showNewDeckModal()">＋新規デッキ</button>
+          <button class="btn-secondary" onclick="openTrashModal()">🗑ごみ箱</button>
+        </div>
+        <div style="display: flex; gap: 4px;">
+          <button class="btn-option-link" onclick="openCsvImportModal()">📥CSV追加</button>
+          <button class="btn-option-link" onclick="showStats()">📊努力量</button>
+          <button class="btn-option-link" onclick="showOption()">⚙オプション</button>
         </div>
       </div>
 
-      <div class="scrollable-content">
-        <div id="deck-list" class="deck-list"></div>
-      </div>
+      <!-- デッキ一覧 -->
+      <div id="deck-list" class="deck-list"></div>
     </section>
 
-    <!-- ================= フェーズ: 努力量の可視化 ================= -->
+    <!-- ================= フェーズ: 努力量の可視化 (カレンダー & 継続記録) ================= -->
     <section id="stats-screen" class="screen hidden">
-      <div class="fixed-header-area">
-        <header class="screen-header">
-          <button class="btn-back" onclick="showMenu()">← メニューに戻る</button>
-          <h2>学習データと努力量</h2>
-        </header>
+      <header class="screen-header">
+        <button class="btn-back" onclick="showMenu()">← メニューに戻る</button>
+        <h2>学習データと努力量</h2>
+      </header>
 
-        <div class="stats-tab-nav">
-          <button id="tab-btn-daily" class="tab-btn active" onclick="switchStatsTab('daily')">日ごとの記録</button>
-          <button id="tab-btn-cards" class="tab-btn" onclick="switchStatsTab('cards')">学習カード</button>
-        </div>
+      <!-- 継続記録カード -->
+      <div class="streak-card">
+        <div class="streak-count">🔥 <span id="streak-days">0</span> 日連続勉強中！！</div>
+        <div id="streak-message" class="streak-message">まずは今日、最初の1枚を挑戦してみよう！</div>
       </div>
 
-      <div class="scrollable-content">
-        <!-- タブ1: 日ごとの記録 -->
-        <div id="stats-tab-daily">
-          <div class="streak-card">
-            <div class="streak-count">🔥 <span id="streak-days">0</span> 日連続勉強中！！</div>
-            <div id="streak-message" class="streak-message">まずは今日、最初の1枚を挑戦してみよう！</div>
-          </div>
-
-          <div class="calendar-card">
-            <div class="calendar-header">
-              <button class="btn-small" onclick="changeCalendarMonth(-1)">← 前月</button>
-              <h3 id="calendar-title">2026年 8月</h3>
-              <button class="btn-small" onclick="changeCalendarMonth(1)">次月 →</button>
-            </div>
-            <div id="calendar-grid" class="calendar-grid"></div>
-          </div>
+      <!-- カレンダーカード -->
+      <div class="calendar-card">
+        <div class="calendar-header">
+          <button class="btn-small" onclick="changeCalendarMonth(-1)">← 前月</button>
+          <h3 id="calendar-title">2026年 8月</h3>
+          <button class="btn-small" onclick="changeCalendarMonth(1)">次月 →</button>
         </div>
-
-        <!-- タブ2: 学習カード -->
-        <div id="stats-tab-cards" class="hidden">
-          <div class="option-group">
-            <h3>本日学習したカード</h3>
-            <p class="help-text" style="margin-bottom: 8px; font-size: 0.8em; color: var(--text-sub);">「もう一度」を選択した回数を表示しています。</p>
-            
-            <div class="sort-controls" style="display: flex; gap: 12px; margin-bottom: 12px; font-size: 0.85em;">
-              <label class="radio-label">
-                <input type="radio" name="today-sort-option" value="RECENT" checked onchange="changeTodayCardsSortOrder('RECENT')">
-                <span>最後に学習した順</span>
-              </label>
-              <label class="radio-label">
-                <input type="radio" name="today-sort-option" value="AGAIN" onchange="changeTodayCardsSortOrder('AGAIN')">
-                <span>「もう一度」が多かった順</span>
-              </label>
-            </div>
-
-            <div id="today-studied-list" class="card-list-container" style="max-height: 400px;"></div>
-          </div>
-        </div>
+        <div id="calendar-grid" class="calendar-grid"></div>
       </div>
     </section>
 
     <!-- ================= フェーズ2: オプション設定 ================= -->
     <section id="option-screen" class="screen hidden">
-      <div class="fixed-header-area">
-        <header class="screen-header">
-          <button class="btn-back" onclick="showMenu()">← メニューに戻る</button>
-          <h2>オプション</h2>
-        </header>
+      <header class="screen-header">
+        <button class="btn-back" onclick="showMenu()">← メニューに戻る</button>
+        <h2>オプション</h2>
+      </header>
+
+      <div class="option-group">
+        <h3>カラーテーマ</h3>
+        <div class="option-controls">
+          <label class="radio-label">
+            <input type="radio" name="theme-option" value="device" onchange="changeTheme('device')">
+            <span>デバイスの設定に従う（デフォルト）</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="theme-option" value="light" onchange="changeTheme('light')">
+            <span>ライト</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="theme-option" value="dark" onchange="changeTheme('dark')">
+            <span>ダーク</span>
+          </label>
+        </div>
       </div>
 
-      <div class="scrollable-content">
-        <div class="option-group">
-          <h3>カラーテーマ</h3>
-          <div class="option-controls">
-            <label class="radio-label">
-              <input type="radio" name="theme-option" value="device" onchange="changeTheme('device')">
-              <span>デバイスの設定に従う（デフォルト）</span>
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="theme-option" value="light" onchange="changeTheme('light')">
-              <span>ライト</span>
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="theme-option" value="dark" onchange="changeTheme('dark')">
-              <span>ダーク</span>
-            </label>
-          </div>
+      <div class="option-group">
+        <h3>デフォルト学習モード</h3>
+        <div class="option-controls">
+          <label class="radio-label">
+            <input type="radio" name="mode-option" value="NORMAL" onchange="changeMode('NORMAL')">
+            <span>ノーマルモード（デフォルト）</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="mode-option" value="FAST" onchange="changeMode('FAST')">
+            <span>読み上げ風モード</span>
+          </label>
         </div>
-
-        <div class="option-group">
-          <h3>デフォルト学習モード</h3>
-          <div class="option-controls">
-            <label class="radio-label">
-              <input type="radio" name="mode-option" value="NORMAL" onchange="changeMode('NORMAL')">
-              <span>ノーマルモード（デフォルト）</span>
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="mode-option" value="FAST" onchange="changeMode('FAST')">
-              <span>読み上げ風モード</span>
-            </label>
-          </div>
-          <p id="mode-description-text" class="mode-description" style="margin-top: 12px; font-size: 0.85em; color: var(--text-sub);"></p>
-        </div>
-
-        <div id="speed-option-group" class="option-group hidden">
-          <h3>文字表示スピード</h3>
-          <div class="speed-control-container">
-            <label for="char-speed-range">表示速度: <span id="speed-value-display">150</span> ms/文字 <small style="color: var(--text-sub);">(デフォルト: 150 ms/文字)</small></label>
-            <input type="range" id="char-speed-range" min="50" max="300" step="10" value="150" oninput="updateCharSpeed(this.value)">
-            <div class="speed-labels">
-              <span>速い (50ms)</span>
-              <span>遅い (300ms)</span>
-            </div>
-          </div>
-          <div class="preview-box">
-            <div class="preview-label">スピード確認プレビュー:</div>
-            <div id="preview-text-container" class="preview-text"></div>
-          </div>
-        </div>
-
-        <!-- 長押し文字表示＆暗記レベル表示の設定オプション -->
-        <div class="option-group">
-          <h3>暗記学習カスタマイズ</h3>
-          <div class="option-controls">
-            <label class="radio-label">
-              <input type="checkbox" id="toggle-long-press" onchange="toggleLongPressOption(this.checked)">
-              <span>長押しでの1文字ずつ表示機能を有効にする</span>
-            </label>
-            <div class="speed-control-container" style="margin-top: 8px;">
-              <label for="hold-speed-range">長押し時文字送り間隔: <span id="hold-speed-display">1.0</span> s/文字<small style="color: var(--text-sub);"> (デフォルト: 1.0 s/文字)</small></label>
-              <input type="range" id="hold-speed-range" min="0.5" max="5.0" step="0.5" value="1.0" oninput="updateHoldSpeed(this.value)">
-            </div>
-            <hr style="border:none; border-top:1px solid var(--card-border); margin: 6px 0;">
-            <label class="radio-label">
-              <input type="checkbox" id="toggle-card-level" onchange="toggleCardLevelOption(this.checked)">
-              <span>暗記レベル（1〜10+★）をカード右上に表示する</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="option-group">
-          <h3>デッキの並び順</h3>
-          <div class="option-controls">
-            <label class="radio-label">
-              <input type="radio" name="sort-option" value="RECENT" onchange="changeDeckSortOrder('RECENT')">
-              <span>最近学習した順（デフォルト）</span>
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="sort-option" value="CREATED" onchange="changeDeckSortOrder('CREATED')">
-              <span>作成・追加順</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="option-group">
-          <h3>アプリ全体の文字の大きさ</h3>
-          <div class="speed-control-container">
-            <label for="font-size-range">文字サイズ: <span id="font-size-value-display">15</span> px <small style="color: var(--text-sub);">(デフォルト: 15px)</small></label>
-            <input type="range" id="font-size-range" min="12" max="24" step="1" value="15" oninput="updateFontSizePreview(this.value)">
-            <div class="speed-labels">
-              <span>小 (12px)</span>
-              <span>大 (24px)</span>
-            </div>
-          </div>
-          <div class="preview-box" style="margin-top: 12px;">
-            <div class="preview-label">文字サイズ確認プレビュー:</div>
-            <div id="font-size-preview-box" class="preview-font-sample">
-              <div id="font-size-preview-q" class="preview-q-text">山梨県と静岡県にまたがる、日本で一番高い山は何でしょう？</div>
-              <div id="font-size-preview-a" class="preview-a-text">正解：富士山</div>
-            </div>
-          </div>
-          <button class="btn-start" style="margin-top: 12px;" onclick="applyAndSaveFontSize()">文字サイズの設定を保存</button>
-        </div>
-
-        <div class="option-group">
-          <h3>💻 パソコンでのキーボード操作設定</h3>
-          <p class="help-text" style="margin-bottom: 8px;">クリックして押したいキーを入力することで、ショートカットキーを変更できます。</p>
-          <table class="shortcut-table">
-            <thead>
-              <tr><th>操作</th><th>キー設定</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>問題のストップ / 解答の表示</td>
-                <td><button class="shortcut-key" id="key-bind-advance" onclick="startKeyBinding('advance')">Space</button></td>
-              </tr>
-              <tr>
-                <td>「もう一度」で回答</td>
-                <td><button class="shortcut-key" id="key-bind-again" onclick="startKeyBinding('again')">1</button></td>
-              </tr>
-              <tr>
-                <td>「難しい」で回答</td>
-                <td><button class="shortcut-key" id="key-bind-hard" onclick="startKeyBinding('hard')">2</button></td>
-              </tr>
-              <tr>
-                <td>「ふつう」で回答</td>
-                <td><button class="shortcut-key" id="key-bind-good" onclick="startKeyBinding('good')">3</button></td>
-              </tr>
-              <tr>
-                <td>「簡単」で回答</td>
-                <td><button class="shortcut-key" id="key-bind-easy" onclick="startKeyBinding('easy')">4</button></td>
-              </tr>
-            </tbody>
-          </table>
-          <button class="btn-small" style="margin-top: 10px; width: 100%;" onclick="resetKeyBinds()">キー割り当てをデフォルトに戻す</button>
-        </div>
-
-        <div class="option-group">
-          <h3>競技クイズ者向け</h3>
-          <p class="help-text" style="margin-bottom: 8px;">問題集の購入・検索に役立つ外部サイトです。</p>
-          <div class="external-link-buttons">
-            <a href="https://booth.pm/ja/search/%E3%82%AF%E3%82%A4%E3%82%BA%E5%95%8F%E9%A1%8C%E9%9B%86" target="_blank" rel="noopener noreferrer" class="btn-external-link">🛒 BOOTH (クイズ問題集検索) ↗</a>
-            <a href="https://q-tak.com/" target="_blank" rel="noopener noreferrer" class="btn-external-link">🚚 クイズ宅急便 ↗</a>
-          </div>
-        </div>
-
-        <div class="option-group" style="text-align: center;">
-          <button class="btn-small btn-small-danger" style="width: 100%; padding: 10px;" onclick="resetAllSettings()">⚙ 設定を初期状態に戻す</button>
-        </div>
-
-        <div class="app-footer-credit">created by 4c6cb3 - ver.1.3.0</div>
+        <p id="mode-description-text" class="mode-description" style="margin-top: 12px; font-size: 0.85em; color: var(--text-sub);"></p>
       </div>
+
+      <div id="speed-option-group" class="option-group hidden">
+        <h3>文字表示スピード</h3>
+        <div class="speed-control-container">
+          <label for="char-speed-range">表示速度: <span id="speed-value-display">150</span> ms/文字 <small style="color: var(--text-sub);">(デフォルト: 150 ms/文字)</small></label>
+          <input type="range" id="char-speed-range" min="50" max="300" step="10" value="150" oninput="updateCharSpeed(this.value)">
+          <div class="speed-labels">
+            <span>速い (50ms)</span>
+            <span>遅い (300ms)</span>
+          </div>
+        </div>
+
+        <div class="preview-box">
+          <div class="preview-label">スピード確認プレビュー:</div>
+          <div id="preview-text-container" class="preview-text"></div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <h3>デッキの並び順</h3>
+        <div class="option-controls">
+          <label class="radio-label">
+            <input type="radio" name="sort-option" value="RECENT" onchange="changeDeckSortOrder('RECENT')">
+            <span>最近学習した順（デフォルト）</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="sort-option" value="CREATED" onchange="changeDeckSortOrder('CREATED')">
+            <span>作成・追加順</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <h3>アプリ全体の文字の大きさ</h3>
+        <div class="speed-control-container">
+          <label for="font-size-range">文字サイズ: <span id="font-size-value-display">15</span> px <small style="color: var(--text-sub);">(デフォルト: 15px)</small></label>
+          <input type="range" id="font-size-range" min="12" max="24" step="1" value="15" oninput="updateFontSizePreview(this.value)">
+          <div class="speed-labels">
+            <span>小 (12px)</span>
+            <span>大 (24px)</span>
+          </div>
+        </div>
+
+        <div class="preview-box" style="margin-top: 12px;">
+          <div class="preview-label">文字サイズ確認プレビュー:</div>
+          <div id="font-size-preview-box" class="preview-font-sample">
+            <div id="font-size-preview-q" class="preview-q-text">山梨県と静岡県にまたがる、日本で一番高い山は何でしょう？</div>
+            <div id="font-size-preview-a" class="preview-a-text">正解：富士山</div>
+          </div>
+        </div>
+
+        <button class="btn-start" style="margin-top: 12px;" onclick="applyAndSaveFontSize()">文字サイズの設定を保存</button>
+      </div>
+
+      <!--  変更点：パソコンでのキーボード操作案内セクションを追加 --> 
+      <div class="option-group">
+        <h3>💻 パソコンでのキーボード操作</h3>
+        <p class="help-text" style="margin-bottom: 8px;">パソコン（キーボード）をご利用の場合、以下のショートカットキーで快適に操作いただけます。</p>
+        <table class="shortcut-table">
+          <thead>
+            <tr>
+              <th>操作</th>
+              <th>キー</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>問題のストップ / 解答の表示</td>
+              <td><span class="shortcut-key">Space</span> または <span class="shortcut-key">Enter</span></td>
+            </tr>
+            <tr>
+              <td>「もう一度」で回答</td>
+              <td><span class="shortcut-key">1</span> キー</td>
+            </tr>
+            <tr>
+              <td>「難しい」で回答</td>
+              <td><span class="shortcut-key">2</span> キー</td>
+            </tr>
+            <tr>
+              <td>「ふつう」で回答</td>
+              <td><span class="shortcut-key">3</span> キー</td>
+            </tr>
+            <tr>
+              <td>「簡単」で回答</td>
+              <td><span class="shortcut-key">4</span> キー</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="option-group">
+        <h3>競技クイズ者向け</h3>
+        <p class="help-text" style="margin-bottom: 8px;">問題集の購入・検索に役立つ外部サイトです。</p>
+        <div class="external-link-buttons">
+          <a href="https://booth.pm/ja/search/%E3%82%AF%E3%82%A4%E3%82%BA%E5%95%8F%E9%A1%8C%E9%9B%86" target="_blank" rel="noopener noreferrer" class="btn-external-link">
+            🛒 BOOTH (クイズ問題集検索) ↗
+          </a>
+          <a href="https://q-tak.com/" target="_blank" rel="noopener noreferrer" class="btn-external-link">
+            🚚 クイズ宅急便 ↗
+          </a>
+        </div>
+      </div>
+
+      <!-- オプション最下部に設定初期化ボタン -->
+      <div class="option-group" style="text-align: center;">
+        <button class="btn-small btn-small-danger" style="width: 100%; padding: 10px;" onclick="resetAllSettings()">⚙ 設定を初期状態に戻す</button>
+      </div>
+
+      <div class="app-footer-credit">created by 4c6cb3 - ver.1.2.0</div>
+
     </section>
 
     <!-- ================= フェーズ3: クイズ画面 ================= -->
@@ -264,32 +218,25 @@
         <div id="progress-info">残り: 0枚</div>
       </header>
 
-      <div style="display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
-        <button id="undo-btn" class="btn-undo-redo" onclick="undoLastAnswer(event)" disabled>Undo</button>
-        <button id="redo-btn" class="btn-undo-redo" onclick="redoLastAnswer(event)" disabled>Redo</button>
-      </div>
-
       <main id="quiz-card" class="card">
-        <div id="card-level-badge" class="card-level-badge hidden">暗記レベル1</div>
-
         <div class="question-container">
-          <p id="question-text" class="card-question"></p>
+          <p id="question-text"></p>
         </div>
 
         <div id="result-stats" class="stats hidden">
-          <span id="stat-progress">読み上げ率: --%</span> | 
+          <span id="stat-progress">達成度: --%</span> | 
           <span id="stat-time">タイム: --秒</span>
         </div>
 
         <div id="answer-section" class="answer-section hidden">
-          <hr class="hide-on-hold">
-          <h2 style="margin-bottom:0;">正解：<span id="answer-text"></span></h2>
-          <div id="answer-image-container" class="answer-image-container hidden hide-on-hold">
+          <hr>
+          <h2>正解：<span id="answer-text"></span></h2>
+          <div id="answer-image-container" class="answer-image-container hidden">
             <img id="answer-image" src="" alt="参考画像" class="answer-img">
           </div>
-          <p id="explanation-text" class="hide-on-hold"></p>
+          <p id="explanation-text"></p>
           
-          <div class="search-btn-container hide-on-hold" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <div class="search-btn-container" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
             <button id="google-search-btn" class="btn-small" style="background: var(--bg-color);" onclick="searchOnGoogle(event)">
               🔍 Googleで「<span id="search-term-text"></span>」を検索
             </button>
@@ -301,27 +248,31 @@
       </main>
 
       <div class="quiz-footer">
-        <div id="tap-hint" class="tap-hint">画面タップ または [Space] キーで操作</div>
+        <!-- 変更点：キーボード操作の補足テキスト表記にも反映 -->
+        <div id="tap-hint" class="tap-hint">画面タップ または [Space/Enter] キーで操作</div>
 
         <footer id="action-buttons" class="button-grid hidden">
-          <button class="btn btn-again" onclick="handleAnswer('again')">もう一度<small>&lt; 1分 [<span id="btn-key-again">1</span>]</small></button>
-          <button class="btn btn-hard" onclick="handleAnswer('hard')">難しい<small>12時間後 [<span id="btn-key-hard">2</span>]</small></button>
-          <button class="btn btn-good" onclick="handleAnswer('good')">ふつう<small>1日後 [<span id="btn-key-good">3</span>]</small></button>
-          <button class="btn btn-easy" onclick="handleAnswer('easy')">簡単<small>4日後 [<span id="btn-key-easy">4</span>]</small></button>
+          <button class="btn btn-again" onclick="handleAnswer('again')">
+            もう一度<small>&lt; 1分 [1]</small>
+          </button>
+          <button class="btn btn-hard" onclick="handleAnswer('hard')">
+            難しい<small>12時間後 [2]</small>
+          </button>
+          <button class="btn btn-good" onclick="handleAnswer('good')">
+            ふつう<small>1日後 [3]</small>
+          </button>
+          <button class="btn btn-easy" onclick="handleAnswer('easy')">
+            簡単<small>4日後 [4]</small>
+          </button>
         </footer>
       </div>
     </section>
 
-    <!-- ================= モーダル ================= -->
+    <!-- ================= モーダル: CSVインポート ================= -->
     <div id="csv-import-modal" class="modal hidden">
       <div class="modal-content">
         <h3>📥 CSVからデッキを追加</h3>
         <p class="help-text">フォーマット: 問題文, 答え, 解説 (ヘッダーなし)（UTF-8を使用してください）</p>
-        
-        <div id="drop-zone" class="drop-zone">
-          <p>ここにCSVファイルをドラッグ＆ドロップ<br>または下のボタンから選択</p>
-        </div>
-
         <div class="file-input-wrapper" style="margin: 12px 0;">
           <input type="file" id="csv-file-input" accept=".csv" class="input-field">
         </div>
@@ -331,14 +282,24 @@
       </div>
     </div>
 
+    <!-- ================= モーダル: デッキ出題設定 ================= -->
     <div id="deck-settings-modal" class="modal hidden">
       <div class="modal-content">
         <h3>⚙ 出題順設定</h3>
         <p id="deck-settings-title" class="help-text" style="margin-bottom: 8px; font-weight: bold;"></p>
         <div class="option-controls">
-          <label class="radio-label"><input type="radio" name="deck-order-option" value="SHUFFLE"><span>シャッフルモード（ランダム出題）</span></label>
-          <label class="radio-label"><input type="radio" name="deck-order-option" value="ORDER"><span>順番モード（リスト登録順）</span></label>
-          <label class="radio-label"><input type="radio" name="deck-order-option" value="WEAK"><span>苦手特化モード（定着率が低い順）</span></label>
+          <label class="radio-label">
+            <input type="radio" name="deck-order-option" value="SHUFFLE">
+            <span>シャッフルモード（ランダム出題）</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="deck-order-option" value="ORDER">
+            <span>順番モード（リスト登録順）</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="deck-order-option" value="WEAK">
+            <span>苦手特化モード（定着率が低い順）</span>
+          </label>
         </div>
         <div class="modal-buttons" style="margin-top: 12px;">
           <button class="btn-modal-cancel" onclick="closeDeckSettingsModal()">キャンセル</button>
@@ -347,64 +308,31 @@
       </div>
     </div>
 
-    <div id="trash-modal" class="modal hidden">
+    <!-- ================= モーダル: カード手動追加 ================= -->
+    <div id="add-card-modal" class="modal hidden">
       <div class="modal-content">
-        <div class="trash-header">
-          <h3>🗑 ゴミ箱</h3>
-          <button id="trash-clear-all-btn" class="btn-small btn-small-danger" onclick="clearAllTrash()">すべて削除</button>
-        </div>
-        <div id="trash-list-container" class="card-list-container" style="max-height: 300px;"></div>
-        <div class="modal-buttons" style="margin-top: 12px;">
-          <button class="btn-modal-cancel" onclick="closeTrashModal()">閉じる</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- モーダル: カード追加 (最前面 modal-top) -->
-    <div id="add-card-modal" class="modal hidden modal-top">
-      <div class="modal-content modal-large">
-        <h3>カード追加</h3>
-        <textarea id="new-card-q" class="input-field textarea-q" placeholder="問題文"></textarea>
-        <textarea id="new-card-a" class="input-field textarea-a" placeholder="答え"></textarea>
-        <textarea id="new-card-exp" class="input-field textarea-exp" placeholder="解説（任意）"></textarea>
-        
-        <div class="image-upload-section">
-          <label style="font-size: 0.85em; font-weight: bold;">参考画像（任意）</label>
-          <div id="add-card-img-drop-zone" class="drop-zone" style="padding: 10px;">
-            <p style="font-size: 0.8em; margin: 0;">ここに画像をドロップ<br>または下のボタンから選択</p>
-          </div>
-          <div class="file-input-wrapper" style="margin: 8px 0;">
-            <input type="file" id="add-card-img-input" accept="image/*" class="input-field">
-          </div>
-          <div id="add-card-img-preview" class="img-preview-container hidden">
-            <img id="add-card-img-element" src="" alt="プレビュー" class="edit-img-preview">
-            <button class="btn-small btn-small-danger" onclick="removeAddCardImage()">画像を削除</button>
-          </div>
-        </div>
-
+        <h3>カードを追加</h3>
+        <textarea id="new-card-q" placeholder="問題文を入力" class="input-field textarea-q"></textarea>
+        <textarea id="new-card-a" placeholder="答えを入力" class="input-field textarea-a"></textarea>
+        <textarea id="new-card-exp" placeholder="解説を入力（任意）" class="input-field textarea-exp"></textarea>
         <div class="modal-buttons">
           <button class="btn-modal-cancel" onclick="closeAddCardModal()">キャンセル</button>
-          <button class="btn-modal-submit" onclick="submitAddCard()">追加</button>
+          <button class="btn-modal-submit" onclick="submitAddCard()">保存</button>
         </div>
       </div>
     </div>
 
-    <!-- モーダル: カード編集 (最前面 modal-top) -->
-    <div id="edit-card-modal" class="modal hidden modal-top">
-      <div class="modal-content modal-large">
-        <h3>カード編集</h3>
-        <textarea id="edit-card-q" class="input-field textarea-q" placeholder="問題文"></textarea>
-        <textarea id="edit-card-a" class="input-field textarea-a" placeholder="答え"></textarea>
-        <textarea id="edit-card-exp" class="input-field textarea-exp" placeholder="解説（任意）"></textarea>
-
+    <!-- ================= モーダル: カード編集 ================= -->
+    <div id="edit-card-modal" class="modal modal-top hidden">
+      <div class="modal-content">
+        <h3>カードを編集</h3>
+        <textarea id="edit-card-q" placeholder="問題文を入力" class="input-field textarea-q"></textarea>
+        <textarea id="edit-card-a" placeholder="答えを入力" class="input-field textarea-a"></textarea>
+        <textarea id="edit-card-exp" placeholder="解説を入力（任意）" class="input-field textarea-exp"></textarea>
+        
         <div class="image-upload-section">
-          <label style="font-size: 0.85em; font-weight: bold;">参考画像（任意）</label>
-          <div id="edit-card-img-drop-zone" class="drop-zone" style="padding: 10px;">
-            <p style="font-size: 0.8em; margin: 0;">ここに画像をドロップ<br>または下のボタンから選択</p>
-          </div>
-          <div class="file-input-wrapper" style="margin: 8px 0;">
-            <input type="file" id="edit-card-img-input" accept="image/*" class="input-field">
-          </div>
+          <label class="help-text">添付画像 (自動的にリサイズ・圧縮されます):</label>
+          <input type="file" id="edit-card-img-input" accept="image/*" class="input-field">
           <div id="edit-card-img-preview" class="img-preview-container hidden">
             <img id="edit-card-img-element" src="" alt="プレビュー" class="edit-img-preview">
             <button class="btn-small btn-small-danger" onclick="removeEditCardImage()">画像を削除</button>
@@ -418,19 +346,34 @@
       </div>
     </div>
 
-    <!-- モーダル: カード一覧 -->
+    <!-- ================= モーダル: カード一覧・編集・削除 ================= -->
     <div id="card-list-modal" class="modal hidden">
       <div class="modal-content modal-large">
-        <h3 id="card-list-deck-title">カード一覧</h3>
-        <div id="card-list-container" class="card-list-container"></div>
+        <h3 id="card-list-deck-title">登録カード一覧</h3>
         <div id="card-pagination" class="card-pagination"></div>
-        <div class="modal-buttons" style="margin-top: 8px;">
+        <div id="card-list-container" class="card-list-container"></div>
+        <div class="modal-buttons">
           <button class="btn-modal-cancel" onclick="closeCardListModal()">閉じる</button>
         </div>
       </div>
     </div>
 
+    <!-- モーダル: ごみ箱モーダル -->
+    <div id="trash-modal" class="modal hidden">
+      <div class="modal-content modal-large">
+        <div class="trash-header">
+          <h3>🗑 ごみ箱 (削除済みデッキ)</h3>
+          <button id="trash-clear-all-btn" class="btn-small btn-small-danger" onclick="clearAllTrash()">まとめて削除</button>
+        </div>
+        <div id="trash-list-container" class="card-list-container"></div>
+        <div class="modal-buttons">
+          <button class="btn-modal-cancel" onclick="closeTrashModal()">閉じる</button>
+        </div>
+      </div>
+    </div>
+
   </div>
+
   <script src="app.js"></script>
 </body>
 </html>
