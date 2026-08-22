@@ -291,12 +291,19 @@ header { text-align: center; margin-bottom: 12px; }
 }
 .btn-undo-redo:disabled { opacity: 0.4; color: var(--text-sub) !important; border-color: var(--card-border) !important; cursor: not-allowed; }
 
+/* ======== 💡 修正ポイント：長押しによるテキスト選択・メニュー表示を無効化 ======== */
 .card {
   background: var(--card-bg); border: 1px solid var(--card-border);
   border-radius: 12px; padding: 24px; min-height: 220px; flex: 1;
   box-shadow: 0 4px 12px var(--shadow); cursor: pointer;
   display: flex; flex-direction: column; justify-content: space-between;
-  user-select: none; position: relative; overflow: hidden;
+  
+  /* スマホの長押しコピー・選択機能を無効化 */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  
+  position: relative; overflow: hidden;
 }
 
 .card-level-badge {
@@ -405,3 +412,20 @@ header { text-align: center; margin-bottom: 12px; }
 .trash-item-title { font-weight: bold; font-size: 0.9em; color: var(--text-main); }
 .trash-item-count { font-size: 0.78em; color: var(--text-sub); }
 .app-footer-credit { text-align: center; font-size: 0.75em; color: var(--text-sub); margin-top: 15px; padding-bottom: 10px; }
+
+/* ======== 💡 提案箇所：PC（マウス操作時）向けのホバーエフェクト ======== */
+@media (hover: hover) and (pointer: fine) {
+  .btn-secondary:hover, .btn-option-link:hover, .btn-small:hover {
+    background-color: var(--stats-bg);
+  }
+  .btn-start:hover, .btn-modal-submit:hover {
+    filter: brightness(1.1);
+  }
+  .btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+  }
+  .card:hover {
+    border-color: var(--accent-color);
+  }
+}

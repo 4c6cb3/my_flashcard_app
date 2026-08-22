@@ -330,7 +330,11 @@ async function initApp() {
   if (savedConfig) {
     userConfig = { ...DEFAULT_USER_CONFIG, ...savedConfig };
     if (typeof userConfig.fontSize === 'string') userConfig.fontSize = 15;
-    if (!userConfig.keyBinds) userConfig.keyBinds = { ...DEFAULT_KEY_BINDS };
+    
+    // 💡 修正ポイント：配列の設定破壊を防ぐためのディープコピー
+    if (!userConfig.keyBinds) {
+      userConfig.keyBinds = JSON.parse(JSON.stringify(DEFAULT_KEY_BINDS));
+    }
   }
   tempFontSize = userConfig.fontSize;
 
@@ -651,7 +655,8 @@ function startPreviewTyping() {
 
 function resetAllSettings() {
   if (confirm('設定を初期状態に戻しますがよろしいですか？')) {
-    userConfig = { ...DEFAULT_USER_CONFIG, keyBinds: { ...DEFAULT_KEY_BINDS } };
+    // 💡 修正ポイント：設定のディープコピー
+    userConfig = { ...DEFAULT_USER_CONFIG, keyBinds: JSON.parse(JSON.stringify(DEFAULT_KEY_BINDS)) };
     tempFontSize = userConfig.fontSize;
     saveConfig(); applyConfigUI();
     if (userConfig.mode === 'FAST') startPreviewTyping();
@@ -689,7 +694,8 @@ function startKeyBinding(action) {
 }
 
 function resetKeyBinds() {
-  userConfig.keyBinds = { ...DEFAULT_KEY_BINDS };
+  // 💡 修正ポイント：設定のディープコピー
+  userConfig.keyBinds = JSON.parse(JSON.stringify(DEFAULT_KEY_BINDS));
   saveConfig(); updateKeyBindButtons(); alert('キー割り当てをデフォルトに戻しました。');
 }
 
@@ -1344,7 +1350,7 @@ function updateUndoRedoUI() {
 }
 
 // =====================================================================
-// 長押しのカスタム挙動 (完全対応版)
+// 長押しのカスタム挙動
 // =====================================================================
 function startHoldAction() {
   if (!userConfig.enableLongPress || !currentCard) return;
@@ -1421,17 +1427,28 @@ function setupEventListeners() {
   const quizCardEl = document.getElementById('quiz-card');
 
   if (quizCardEl) {
+    // 💡 修正ポイント：長押し時のコンテキストメニュー表示やテキスト選択をJS側でもブロック
+    quizCardEl.addEventListener('contextmenu', (e) => {
+      if (isTouchDevice) {
+        if (!e.target.closest('button') && !e.target.closest('a') && !e.target.closest('input') && !e.target.closest('textarea')) {
+          e.preventDefault();
+        }
+      }
+    });
+
     quizCardEl.addEventListener('mousedown', (e) => {
       if (isTouchDevice) return;
       if (e.target.closest('button') || e.target.closest('a')) return;
       startHoldAction();
     });
+    
     quizCardEl.addEventListener('mouseup', (e) => {
       if (isTouchDevice) return;
       if (e.target.closest('button') || e.target.closest('a')) return;
       endHoldAction();
       if (!didHold) advanceQuizState();
     });
+    
     quizCardEl.addEventListener('mouseleave', () => {
       if (isTouchDevice) return;
       endHoldAction();
