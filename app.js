@@ -1427,15 +1427,29 @@ function setupEventListeners() {
   const quizCardEl = document.getElementById('quiz-card');
 
   if (quizCardEl) {
-    // 💡 修正ポイント：長押し時のコンテキストメニュー表示やテキスト選択をJS側でもブロック
+    // 💡 1. 右クリック・長押しメニューを完全に無効化
     quizCardEl.addEventListener('contextmenu', (e) => {
-      if (isTouchDevice) {
-        if (!e.target.closest('button') && !e.target.closest('a') && !e.target.closest('input') && !e.target.closest('textarea')) {
-          e.preventDefault();
-        }
+      if (!e.target.closest('input') && !e.target.closest('textarea')) {
+        e.preventDefault();
       }
     });
 
+    // 💡 2. テキスト選択の開始イベント自体をブロック
+    quizCardEl.addEventListener('selectstart', (e) => {
+      if (!e.target.closest('input') && !e.target.closest('textarea')) {
+        e.preventDefault();
+      }
+    });
+
+    // 💡 3. 長押し中に万が一選択が走った場合も即時クリア
+    document.addEventListener('selectionchange', () => {
+      if (isHolding) {
+        const sel = window.getSelection();
+        if (sel) sel.removeAllRanges();
+      }
+    });
+
+    // マウス操作（PC用）
     quizCardEl.addEventListener('mousedown', (e) => {
       if (isTouchDevice) return;
       if (e.target.closest('button') || e.target.closest('a')) return;
@@ -1454,10 +1468,16 @@ function setupEventListeners() {
       endHoldAction();
     });
 
+    // タッチ操作（スマホ用）
     quizCardEl.addEventListener('touchstart', (e) => {
       isTouchDevice = true;
       isScrolling = false;
       if (e.target.closest('button') || e.target.closest('a')) return;
+      
+      // 選択状態のクリア
+      const sel = window.getSelection();
+      if (sel) sel.removeAllRanges();
+      
       startHoldAction();
     }, { passive: true });
     
